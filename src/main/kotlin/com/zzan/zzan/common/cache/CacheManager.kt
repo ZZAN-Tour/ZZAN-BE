@@ -25,7 +25,7 @@ class CacheManager(
                 null
             }
         } catch (e: Exception) {
-            logger.error("캐시 조회 중 오류 발생: key=$key", e)
+            logger.error("캐시 조회 중 에러: key=$key", e)
             null
         }
     }
@@ -38,7 +38,7 @@ class CacheManager(
         try {
             redisTemplate.opsForValue().set(key, value, ttl.toMillis(), TimeUnit.MILLISECONDS)
         } catch (e: Exception) {
-            logger.error("캐시 저장 중 오류 발생: key=$key, value=$value", e)
+            logger.error("캐시 저장 중 에러: key=$key, value=$value", e)
         }
     }
 
@@ -50,7 +50,7 @@ class CacheManager(
         try {
             redisTemplate.delete(key)
         } catch (e: Exception) {
-            logger.error("캐시 삭제 오류: key=$key", e)
+            logger.error("캐시 삭제 중 에러: key=$key", e)
         }
     }
 }
