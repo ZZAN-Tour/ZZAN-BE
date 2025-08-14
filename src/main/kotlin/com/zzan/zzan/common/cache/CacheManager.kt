@@ -4,13 +4,12 @@ import mu.KLogging
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.stereotype.Component
 import java.time.Duration
-import java.util.concurrent.TimeUnit
 
 @Component
 class CacheManager(
     private val redisTemplate: RedisTemplate<String, Any>,
     private val cacheProperties: CacheProperties
-) : KLogging(){
+) : KLogging() {
 
     /**
      * Look Aside Pattern
@@ -34,11 +33,11 @@ class CacheManager(
      * Look Aside Pattern
      * 데이터를 DB에서 읽어 왔을 때는 캐시에도 Set
      */
-    fun set(key: String, value: Any, ttl: Duration = Duration.ofSeconds(cacheProperties.defaultTtl)) {
+    fun set(key: String, value: Any, ttl: Duration? = null) {
         try {
-            redisTemplate.opsForValue().set(key, value, ttl.toMillis(), TimeUnit.MILLISECONDS)
+            redisTemplate.opsForValue().set(key, value, ttl ?: cacheProperties.defaultTtl)
         } catch (e: Exception) {
-            logger.error("캐시 저장 중 에러: key=$key, value=$value", e)
+            logger.error("캐시 저장 중 에러: key=$key", e)
         }
     }
 
