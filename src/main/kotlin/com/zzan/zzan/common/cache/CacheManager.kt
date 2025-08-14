@@ -2,11 +2,11 @@ package com.zzan.zzan.common.cache
 
 import mu.KLogging
 import org.springframework.data.redis.core.RedisTemplate
-import org.springframework.stereotype.Service
+import org.springframework.stereotype.Component
 import java.time.Duration
 import java.util.concurrent.TimeUnit
 
-@Service
+@Component
 class CacheManager(
     private val redisTemplate: RedisTemplate<String, Any>,
     private val cacheProperties: CacheProperties
