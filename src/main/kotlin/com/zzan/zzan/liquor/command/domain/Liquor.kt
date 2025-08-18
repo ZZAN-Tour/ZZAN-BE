@@ -1,7 +1,10 @@
 package com.zzan.zzan.liquor.command.domain
 
-import jakarta.persistence.*
 import com.github.f4b6a3.ulid.UlidCreator
+import jakarta.persistence.Column
+import jakarta.persistence.Entity
+import jakarta.persistence.Id
+import jakarta.persistence.Table
 
 @Entity
 @Table(name = "liquors")
@@ -13,6 +16,8 @@ class Liquor(
     val name: String,
 
     val type: String, // 탁주, 약주, 증류주 등
+
+    val score: Double? = null, // 평점 (예: 4.5)
 
     @Column(columnDefinition = "TEXT")
     val description: String?,
