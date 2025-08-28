@@ -1,3 +1,4 @@
+
 // src/test/kotlin/com/zzan/zzan/liquor/query/handler/LiquorSearchServiceTest.kt
 package com.zzan.zzan.liquor.query.handler
 
@@ -8,8 +9,6 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.jupiter.api.Test
-import org.springframework.data.domain.PageImpl
-import org.springframework.data.domain.PageRequest
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -20,68 +19,80 @@ class LiquorSearchServiceTest {
     private val liquorSearchService = LiquorSearchServiceImpl(liquorSearchRepository)
 
     @Test
-    fun `전통주 이름으로 검색 성공 테스트`() {
+    fun `자동완성 검색 성공 테스트 - 참으로 시작하는 전통주들`() {
+        // Given
+        val keyword = "참"
+        val limit = 5
+        val expectedResults = listOf(
+            LiquorSearchResponse("liquor-001", "참이슬", "증류주", "하이트진로", null),
+            LiquorSearchResponse("liquor-002", "참참참", "탁주", "참좋은양조장", null)
+        )
+
+        every { liquorSearchRepository.findLiquorsStartingWith(keyword) } returns expectedResults
+
+        // When
+        val result = liquorSearchService.autocomplete(keyword, limit)
+
+        // Then
+        assertEquals(2, result.size)
+        assertEquals("참이슬", result[0].name)
+        assertEquals("참참참", result[1].name)
+        assertTrue(result.all { it.name.startsWith("참") })
+        verify(exactly = 1) { liquorSearchRepository.findLiquorsStartingWith(keyword) }
+    }
+
+    @Test
+    fun `정확한 매칭 검색 테스트 - 참이슬 검색시 참이슬 ID 반환`() {
         // Given
         val keyword = "참이슬"
-        val pageRequest = PageRequest.of(0, 10)
         val expectedResults = listOf(
-            LiquorSearchResponse(
-                id = "liquor-001",
-                name = "참이슬",
-                type = "증류주",
-                brewery = "하이트진로",
-                imageUrl = "https://example.com/chamisul.jpg"
-            )
+            LiquorSearchResponse("liquor-001", "참이슬", "증류주", "하이트진로", "https://example.com/chamisul.jpg")
         )
-        val pageResult = PageImpl(expectedResults, pageRequest, 1)
 
-        every { liquorSearchRepository.searchByKeyword(keyword, pageRequest) } returns pageResult
+        every { liquorSearchRepository.searchLiquors(keyword) } returns expectedResults
 
         // When
-        val result = liquorSearchService.searchLiquors(keyword, pageRequest)
+        val result = liquorSearchService.search(keyword)
 
         // Then
-        assertEquals(1, result.totalElements)
-        assertEquals("참이슬", result.content[0].name)
-        verify(exactly = 1) { liquorSearchRepository.searchByKeyword(keyword, pageRequest) }
+        assertEquals(1, result.size)
+        assertEquals("liquor-001", result[0].id)
+        assertEquals("참이슬", result[0].name)
+        verify(exactly = 1) { liquorSearchRepository.searchLiquors(keyword) }
     }
 
     @Test
-    fun `빈 키워드로 검색시 전체 목록 반환 테스트`() {
+    fun `빈 키워드 검색시 빈 결과 반환`() {
         // Given
         val keyword = ""
-        val pageRequest = PageRequest.of(0, 10)
-        val allResults = listOf(
-            LiquorSearchResponse("liquor-001", "참이슬", "증류주", "하이트진로", null),
-            LiquorSearchResponse("liquor-002", "막걸리", "탁주", "국순당", null)
-        )
-        val pageResult = PageImpl(allResults, pageRequest, 2)
-
-        every { liquorSearchRepository.searchByKeyword("", pageRequest) } returns pageResult
 
         // When
-        val result = liquorSearchService.searchLiquors(keyword, pageRequest)
+        val autocompleteResult = liquorSearchService.autocomplete(keyword)
+        val searchResult = liquorSearchService.search(keyword)
 
         // Then
-        assertEquals(2, result.totalElements)
-        verify(exactly = 1) { liquorSearchRepository.searchByKeyword("", pageRequest) }
+        assertTrue(autocompleteResult.isEmpty())
+        assertTrue(searchResult.isEmpty())
+        verify(exactly = 0) { liquorSearchRepository.findLiquorsStartingWith(any()) }
+        verify(exactly = 0) { liquorSearchRepository.searchLiquors(any()) }
     }
 
     @Test
-    fun `검색 결과 없음 테스트`() {
+    fun `자동완성 결과 제한 테스트`() {
         // Given
-        val keyword = "존재하지않는술"
-        val pageRequest = PageRequest.of(0, 10)
-        val emptyResult = PageImpl<LiquorSearchResponse>(emptyList(), pageRequest, 0)
+        val keyword = "ㅁ"
+        val limit = 3
+        val manyResults = (1..10).map {
+            LiquorSearchResponse("liquor-$it", "막걸리$it", "탁주", "양조장$it", null)
+        }
 
-        every { liquorSearchRepository.searchByKeyword(keyword, pageRequest) } returns emptyResult
+        every { liquorSearchRepository.findLiquorsStartingWith(keyword) } returns manyResults
 
         // When
-        val result = liquorSearchService.searchLiquors(keyword, pageRequest)
+        val result = liquorSearchService.autocomplete(keyword, limit)
 
         // Then
-        assertEquals(0, result.totalElements)
-        assertTrue(result.content.isEmpty())
-        verify(exactly = 1) { liquorSearchRepository.searchByKeyword(keyword, pageRequest) }
+        assertEquals(3, result.size) // limit만큼만 반환되어야 함
+        verify(exactly = 1) { liquorSearchRepository.findLiquorsStartingWith(keyword) }
     }
 }

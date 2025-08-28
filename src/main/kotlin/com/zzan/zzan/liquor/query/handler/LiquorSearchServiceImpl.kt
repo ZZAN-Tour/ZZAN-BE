@@ -1,11 +1,9 @@
-// src/main/kotlin/com/zzan/zzan/liquor/query/handler/LiquorSearchServiceImpl.kt
+// src/main/kotlin/com/zzan/zzan/liquor/query/handler/LiquorSearchServiceImpl.kt (수정)
 package com.zzan.zzan.liquor.query.handler
 
 import com.zzan.zzan.api.liquor.dto.LiquorSearchResponse
 import com.zzan.zzan.liquor.query.repository.LiquorSearchRepository
 import org.springframework.cache.annotation.Cacheable
-import org.springframework.data.domain.Page
-import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 
 @Service
@@ -13,9 +11,20 @@ class LiquorSearchServiceImpl(
     private val liquorSearchRepository: LiquorSearchRepository
 ) : LiquorSearchService {
 
-    @Cacheable("liquorSearch", key = "#keyword + '_' + #pageable.pageNumber + '_' + #pageable.pageSize")
-    override fun searchLiquors(keyword: String, pageable: Pageable): Page<LiquorSearchResponse> {
+    @Cacheable("liquorAutocomplete", key = "#keyword + '_' + #limit")
+    override fun autocomplete(keyword: String, limit: Int): List<LiquorSearchResponse> {
+        if (keyword.isBlank()) return emptyList()
+
         val trimmedKeyword = keyword.trim()
-        return liquorSearchRepository.searchByKeyword(trimmedKeyword, pageable)
+        return liquorSearchRepository.findLiquorsStartingWith(trimmedKeyword)
+            .take(limit)
+    }
+
+    @Cacheable("liquorSearch", key = "#keyword")
+    override fun search(keyword: String): List<LiquorSearchResponse> {
+        if (keyword.isBlank()) return emptyList()
+
+        val trimmedKeyword = keyword.trim()
+        return liquorSearchRepository.searchLiquors(trimmedKeyword)
     }
 }
