@@ -1,6 +1,7 @@
 package com.zzan.zzan.user.command.domain
 
 import com.github.f4b6a3.ulid.UlidCreator
+import com.zzan.zzan.common.client.dto.KakaoUserResponse
 import jakarta.persistence.*
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
@@ -27,8 +28,18 @@ class User(
 
     @CreatedDate
     @Column(name = "created_at")
-    val createdAt: LocalDateTime? = null,
+    var createdAt: LocalDateTime? = null,
 
     @Column(name = "deleted_at")
     val deletedAt: LocalDateTime? = null
-)
+) {
+    companion object {
+        fun of(kakaoUser: KakaoUserResponse): User {
+            return User(
+                kakaoId = kakaoUser.id.toString(),
+                profileImageUrl = kakaoUser.kakaoAccount.profile.profileImageUrl,
+                nickname = kakaoUser.kakaoAccount.profile.nickname
+            )
+        }
+    }
+}
