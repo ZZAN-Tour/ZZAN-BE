@@ -1,4 +1,4 @@
-package com.zzan.zzan.api.config
+package com.zzan.zzan.api.security.config
 
 import com.zzan.zzan.api.security.filter.JwtAuthenticationFilter
 import org.springframework.context.annotation.Bean
@@ -8,7 +8,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
-
 
 @Configuration
 @EnableWebSecurity
