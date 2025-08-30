@@ -38,11 +38,18 @@ services:
             dockerfile: Dockerfile
         environment:
             - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-default}
+            # Database configuration
             - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-            - REDIS_URL=redis://redis:6379
             - POSTGRES_USER=${POSTGRES_USER}
             - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
             - POSTGRES_DB=${POSTGRES_DB}
+            # Redis configuration
+            - REDIS_URL=redis://redis:6379
+            # JWT Secret Key
+            - JWT_SECRET_KEY=${JWT_SECRET}
+            # Kakao API Key
+            - KAKAO_CLIENT_ID=${KAKAO_CLIENT_ID}
+            - KAKAO_REDIRECT_URI=${KAKAO_REDIRECT_URI}
         ports:
             - '${WEB_PORT:-8000}:8080'
         depends_on:
