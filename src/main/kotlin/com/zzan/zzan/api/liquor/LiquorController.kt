@@ -5,16 +5,16 @@ import com.zzan.zzan.common.response.ApiResponse
 import com.zzan.zzan.liquor.query.handler.LiquorQueryService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-class LiquorController (
+@RequestMapping("/liquor")
+class LiquorController(
     private val liquorQueryService: LiquorQueryService,
-){
-    @GetMapping("/liquors/{id}")
+) {
+    @GetMapping("/{id}")
     fun getLiquorById(@PathVariable id: String): ApiResponse<LiquorDetailResponse> {
-        return ApiResponse.ok(
-            liquorQueryService.getLiquorById(id)
-        )
+        return ApiResponse.ok(liquorQueryService.getLiquorById(id))
     }
 }
