@@ -5,6 +5,7 @@ import com.zzan.zzan.common.exception.CustomException
 import com.zzan.zzan.feed.command.repository.FeedImageRepository
 import com.zzan.zzan.feed.query.FeedQueryService
 import com.zzan.zzan.feed.query.repository.FeedQueryRepository
+import com.zzan.zzan.liquortag.query.service.LiquorTagQueryService
 import com.zzan.zzan.place.command.repository.PlaceRepository
 import com.zzan.zzan.user.command.repository.UserRepository
 import org.springframework.cache.annotation.Cacheable
@@ -15,13 +16,15 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 
+
 @Service
 @Transactional(readOnly = true)
 class FeedQueryServiceImpl(
     private val feedQueryRepository: FeedQueryRepository,
     private val userRepository: UserRepository,
     private val placeRepository: PlaceRepository,
-    private val feedImageRepository: FeedImageRepository
+    private val feedImageRepository: FeedImageRepository,
+    private val liquorTagQueryService: LiquorTagQueryService // 🆕 추가
 ) : FeedQueryService {
 
     @Cacheable("feed", key = "#feedId")
@@ -51,6 +54,20 @@ class FeedQueryServiceImpl(
             )
         }
 
+        // 🆕 태그 정보 조회
+        val tags = liquorTagQueryService.getTagsByFeedId(feedId).map { tag ->
+            TagInfo(
+                id = tag.id,
+                imageId = tag.imageId,
+                liquorId = tag.liquorId,
+                liquorName = tag.liquorName,
+                liquorType = tag.liquorType,
+                liquorBrewery = tag.liquorBrewery,
+                tagX = tag.tagX,
+                tagY = tag.tagY
+            )
+        }
+
         return FeedDetailResponse(
             id = feed.id,
             userId = user.id,
@@ -76,6 +93,7 @@ class FeedQueryServiceImpl(
                 )
             },
             images = images,
+            tags = tags, // 🆕 태그 정보 포함
             createdAt = feed.createdAt ?: LocalDateTime.now()
         )
     }
