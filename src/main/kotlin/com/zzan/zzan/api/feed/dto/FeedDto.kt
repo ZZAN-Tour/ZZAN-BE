@@ -1,5 +1,6 @@
 package com.zzan.zzan.api.feed.dto
 
+import com.zzan.zzan.api.liquortag.dto.TagInFeedRequest
 import jakarta.validation.Valid
 import jakarta.validation.constraints.*
 import java.time.LocalDateTime
@@ -25,8 +26,13 @@ data class CreateFeedRequest(
 
     @field:Valid
     @field:NotEmpty(message = "최소 1개의 이미지가 필요합니다.")
-    val images: List<FeedImageRequest>
+    val images: List<FeedImageRequest>,
+
+    @field:Valid
+    val tags: List<TagInFeedRequest> = emptyList() // 태그 추가
 )
+
+
 
 data class FeedImageRequest(
     @field:NotBlank(message = "이미지 URL은 필수입니다.")
@@ -58,7 +64,20 @@ data class FeedDetailResponse(
     val place: PlaceInfo,
     val buyPlace: PlaceInfo?,
     val images: List<FeedImageInfo>,
+    val tags: List<TagInfo>,
     val createdAt: LocalDateTime
+)
+
+// 태그 정보 DTO
+data class TagInfo(
+    val id: String,
+    val imageId: String,
+    val liquorId: String,
+    val liquorName: String,
+    val liquorType: String,
+    val liquorBrewery: String?,
+    val tagX: Double,
+    val tagY: Double
 )
 
 data class FeedSummaryResponse(

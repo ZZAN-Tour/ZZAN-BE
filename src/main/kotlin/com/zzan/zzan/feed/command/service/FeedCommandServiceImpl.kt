@@ -1,6 +1,8 @@
+// src/main/kotlin/com/zzan/zzan/feed/command/service/FeedCommandServiceImpl.kt (업데이트)
 package com.zzan.zzan.feed.command.service
 
 import com.zzan.zzan.api.feed.dto.*
+import com.zzan.zzan.api.liquortag.dto.TagInFeedRequest
 import com.zzan.zzan.common.exception.CustomException
 import com.zzan.zzan.feed.command.domain.Feed
 import com.zzan.zzan.feed.command.domain.FeedImage
@@ -9,6 +11,7 @@ import com.zzan.zzan.feed.command.event.FeedUpdatedEvent
 import com.zzan.zzan.feed.command.event.FeedDeletedEvent
 import com.zzan.zzan.feed.command.repository.FeedImageRepository
 import com.zzan.zzan.feed.command.repository.FeedRepository
+import com.zzan.zzan.liquortag.command.service.LiquorTagCommandService
 import com.zzan.zzan.place.command.repository.PlaceRepository
 import com.zzan.zzan.user.command.repository.UserRepository
 import org.springframework.context.ApplicationEventPublisher
@@ -24,7 +27,8 @@ class FeedCommandServiceImpl(
     private val feedImageRepository: FeedImageRepository,
     private val userRepository: UserRepository,
     private val placeRepository: PlaceRepository,
-    private val eventPublisher: ApplicationEventPublisher
+    private val eventPublisher: ApplicationEventPublisher,
+    private val liquorTagCommandService: LiquorTagCommandService
 ) : FeedCommandService {
 
     override fun createFeed(request: CreateFeedRequest): String {
@@ -40,7 +44,6 @@ class FeedCommandServiceImpl(
             placeId = request.placeId,
             buyPlaceId = request.buyPlaceId
         )
-
         val savedFeed = feedRepository.save(feed)
 
         // 3. FeedImage 엔티티들 생성 및 저장
@@ -51,16 +54,21 @@ class FeedCommandServiceImpl(
                 orderNum = imageRequest.orderNum
             )
         }
-        feedImageRepository.saveAll(feedImages)
+        val savedImages = feedImageRepository.saveAll(feedImages)
 
-        // 4. 이벤트 발행 (Query Side에서 처리할 수 있도록)
+        // 4. 🆕 태그 생성 (요구사항: 이미지 번호, 상대좌표, 전통주 id)
+        if (request.tags.isNotEmpty()) {
+            liquorTagCommandService.createTagsForFeed(savedFeed.id, savedImages, request.tags)
+        }
+
+        // 5. 이벤트 발행
         eventPublisher.publishEvent(
             FeedCreatedEvent(
                 feedId = savedFeed.id,
                 userId = savedFeed.userId,
                 placeId = savedFeed.placeId,
                 buyPlaceId = savedFeed.buyPlaceId,
-                imageIds = feedImages.map { it.id }
+                imageIds = savedImages.map { it.id }
             )
         )
 
@@ -68,25 +76,22 @@ class FeedCommandServiceImpl(
     }
 
     override fun updateFeed(feedId: String, request: UpdateFeedRequest) {
-        // 1. 기존 피드 조회
+        // 기존 로직 유지
         val existingFeed = feedRepository.findByIdAndDeletedAtIsNull(feedId)
             ?: throw CustomException(HttpStatus.NOT_FOUND, "해당 피드를 찾을 수 없습니다.")
 
-        // 2. 구매 장소 유효성 검사
         request.buyPlaceId?.let { buyPlaceId ->
             if (!placeRepository.existsById(buyPlaceId)) {
                 throw CustomException(HttpStatus.BAD_REQUEST, "존재하지 않는 구매 장소입니다.")
             }
         }
 
-        // 3. 업데이트된 피드 생성
         val updatedFeed = existingFeed.copy(
             score = request.score ?: existingFeed.score,
             text = request.text ?: existingFeed.text,
             buyPlaceId = request.buyPlaceId ?: existingFeed.buyPlaceId
         )
 
-        // 4. 저장 및 이벤트 발행
         feedRepository.save(updatedFeed)
         eventPublisher.publishEvent(
             FeedUpdatedEvent(
@@ -101,23 +106,20 @@ class FeedCommandServiceImpl(
     }
 
     override fun deleteFeed(feedId: String) {
-        // 1. 피드 존재 확인
         val feed = feedRepository.findByIdAndDeletedAtIsNull(feedId)
             ?: throw CustomException(HttpStatus.NOT_FOUND, "해당 피드를 찾을 수 없습니다.")
 
-        // 2. 소프트 삭제
+        // 🆕 태그도 함께 삭제
+        liquorTagCommandService.deleteTagsByFeedId(feedId)
+
         val deletedFeed = feed.copy(deletedAt = LocalDateTime.now())
         feedRepository.save(deletedFeed)
 
-        // 3. 관련 이미지들 삭제
         feedImageRepository.deleteByFeedId(feedId)
-
-        // 4. 이벤트 발행
         eventPublisher.publishEvent(FeedDeletedEvent(feedId = feedId))
     }
 
     private fun validateFeedCreation(request: CreateFeedRequest) {
-        // 유효성 검사 로직 (기존과 동일)
         if (!userRepository.existsByIdAndDeletedAtIsNull(request.userId)) {
             throw CustomException(HttpStatus.BAD_REQUEST, "존재하지 않는 사용자입니다.")
         }
