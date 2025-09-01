@@ -8,28 +8,27 @@ import jakarta.persistence.Table
 
 @Entity
 @Table(name = "liquor_tags")
-class LiquorTag(
+data class LiquorTag(
     @Id
     @Column(length = 26)
     val id: String = UlidCreator.getUlid().toString(),
 
-    @Column(name = "liquor_id", length = 26)
-    val liquorId: String, // 전통주 ID
-
-    @Column(name = "liquor_name", length = 50)
-    val liquorName: String, // 전통주 이름
+    @Column(name = "feed_id", length = 26)
+    val feedId: String,
 
     @Column(name = "image_id", length = 26)
-    val imageId: String, // 태그가 달린 이미지 ID
+    val imageId: String,
 
-    @Column(name = "feed_id", length = 26)
-    val feedId: String, // 태그 ID
+    @Column(name = "liquor_id", length = 26)
+    val liquorId: String,
 
-    val score: Double? = null, // 전통주 평점 (0~5)
+    // 상대 좌표 (0.0 ~ 1.0)
+    @Column(columnDefinition = "DECIMAL(10,8)")
+    val tagX: Double,
 
-    @Column(precision = 10)
-    val tagX: Double, // 태그 위치 X 좌표 (0~1 범위 상대좌표)
-
-    @Column(precision = 10)
-    val tagY: Double, // 태그 위치 Y 좌표 (0~1 범위 상대좌표)
-)
+    @Column(columnDefinition = "DECIMAL(10,8)")
+    val tagY: Double
+) {
+    // JPA 요구사항을 위한 기본 생성자
+    protected constructor() : this("", "", "", "", 0.0, 0.0)
+}

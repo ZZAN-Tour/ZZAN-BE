@@ -5,7 +5,7 @@ import com.github.f4b6a3.ulid.UlidCreator
 
 @Entity
 @Table(name = "feed_images")
-class FeedImage(
+data class FeedImage(
     @Id
     @Column(length = 26)
     val id: String = UlidCreator.getUlid().toString(),
@@ -17,5 +17,8 @@ class FeedImage(
     val imageUrl: String,
 
     @Column(name = "order_num")
-    val orderNum: Int // 피드 내 이미지 순서
-)
+    val orderNum: Int
+) {
+    // JPA 요구사항을 위한 기본 생성자
+    constructor() : this("", "", "", 0)
+}

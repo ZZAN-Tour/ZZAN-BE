@@ -9,27 +9,27 @@ import java.time.LocalDateTime
 @Entity
 @Table(name = "feeds")
 @EntityListeners(AuditingEntityListener::class)
-class Feed(
+data class Feed(
     @Id
     @Column(length = 26)
     val id: String = UlidCreator.getUlid().toString(),
 
     @Column(name = "user_id", length = 26)
-    val userId: String, // 작성자 ID
+    val userId: String,
 
     @Column(name = "image_url")
-    val imageUrl: String, // 피드 대표 이미지 URL
+    val imageUrl: String,
 
-    val score: Double? = null, // 피드 평점 (0~5)
+    val score: Double? = null,
 
     @Column(columnDefinition = "TEXT")
-    val text: String? = null, // 피드 내용
+    val text: String? = null,
 
     @Column(name = "place_id", length = 26)
-    val placeId: String, // 피드 장소 ID
+    val placeId: String,
 
     @Column(name = "buy_place_id", length = 26)
-    val buyPlaceId: String? = null, // 전통주 구매 장소 ID
+    val buyPlaceId: String? = null,
 
     @CreatedDate
     @Column(name = "created_at")
@@ -37,4 +37,7 @@ class Feed(
 
     @Column(name = "deleted_at")
     val deletedAt: LocalDateTime? = null
-)
+) {
+    // JPA 요구사항을 위한 기본 생성자
+    protected constructor() : this("", "", "", null, null, "", null, null, null)
+}
