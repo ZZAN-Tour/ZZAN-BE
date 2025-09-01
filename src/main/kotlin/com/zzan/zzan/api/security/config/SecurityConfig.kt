@@ -21,6 +21,7 @@ class SecurityConfig(
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) } // 세션 관리 정책을 Stateless로 설정
             .authorizeHttpRequests { it.anyRequest().permitAll() } // 모든 요청 허용
             .formLogin { it.disable() } // 폼 로그인 비활성화
+
             .httpBasic { it.disable() } // HTTP Basic 인증 비활성화
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java) // JWT 인증 필터 추가
             .build()
