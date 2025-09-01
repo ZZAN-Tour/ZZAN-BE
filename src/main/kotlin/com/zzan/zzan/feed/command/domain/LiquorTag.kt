@@ -30,5 +30,5 @@ data class LiquorTag(
     val tagY: Double
 ) {
     // JPA 요구사항을 위한 기본 생성자
-    constructor() : this("", "", "", "", 0.0, 0.0)
+    protected constructor() : this("", "", "", "", 0.0, 0.0)
 }

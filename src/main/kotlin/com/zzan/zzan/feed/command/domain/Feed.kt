@@ -39,5 +39,5 @@ data class Feed(
     val deletedAt: LocalDateTime? = null
 ) {
     // JPA 요구사항을 위한 기본 생성자
-    constructor() : this("", "", "", null, null, "", null, null, null)
+    protected constructor() : this("", "", "", null, null, "", null, null, null)
 }
