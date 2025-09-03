@@ -8,9 +8,7 @@ import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 
 /**
- * 전통주 평점 Repository 인터페이스
- *
- * 기본 CRUD 외에 비즈니스 요구사항에 따른 다양한 조회 메서드 제공
+ * 전통주 평점 Repository 인터페이스 - 쿼리 수정된 버전
  */
 @Repository
 interface LiquorRatingRepository : JpaRepository<LiquorRating, String> {
@@ -30,7 +28,7 @@ interface LiquorRatingRepository : JpaRepository<LiquorRating, String> {
     fun findByUserIdOrderByCreatedAtDesc(userId: String): List<LiquorRating>
 
     /**
-     * 특정 사용자의 특정 전통주에 대한 평점들 조회 (같은 전통주 여러 평점 가능)
+     * 특정 사용자의 특정 전통주에 대한 평점들 조회
      */
     fun findByUserIdAndLiquorIdOrderByCreatedAtDesc(userId: String, liquorId: String): List<LiquorRating>
 
@@ -45,14 +43,14 @@ interface LiquorRatingRepository : JpaRepository<LiquorRating, String> {
     fun findByPlaceIdOrderByCreatedAtDesc(placeId: String): List<LiquorRating>
 
     // =============================================
-    // 통계용 쿼리 메서드들 (배치 처리에서 사용)
+    // 통계용 쿼리 메서드들 (수정됨 - _score → score)
     // =============================================
 
     /**
      * 모든 전통주별 평점 통계 조회 (전체 재계산용)
      */
     @Query("""
-        SELECT r.liquorId, COUNT(r.id), AVG(r._score), SUM(r._score)
+        SELECT r.liquorId, COUNT(r.id), AVG(r.score), SUM(r.score)
         FROM LiquorRating r 
         GROUP BY r.liquorId
     """)
@@ -62,7 +60,7 @@ interface LiquorRatingRepository : JpaRepository<LiquorRating, String> {
      * 특정 전통주의 평점 통계 조회
      */
     @Query("""
-        SELECT COUNT(r.id), AVG(r._score)
+        SELECT COUNT(r.id), AVG(r.score)
         FROM LiquorRating r 
         WHERE r.liquorId = :liquorId
     """)
@@ -72,29 +70,26 @@ interface LiquorRatingRepository : JpaRepository<LiquorRating, String> {
      * 평점 점수별 분포 조회
      */
     @Query("""
-        SELECT FLOOR(r._score) as scoreGroup, COUNT(r.id) as count
+        SELECT FLOOR(r.score) as scoreGroup, COUNT(r.id) as count
         FROM LiquorRating r 
         WHERE r.liquorId = :liquorId
-        GROUP BY FLOOR(r._score)
-        ORDER BY FLOOR(r._score) DESC
+        GROUP BY FLOOR(r.score)
+        ORDER BY FLOOR(r.score) DESC
     """)
     fun findScoreDistributionByLiquorId(@Param("liquorId") liquorId: String): List<Array<Any>>
 
     // =============================================
-    // 고급 조회 메서드들
+    // 고급 조회 메서드들 (수정됨)
     // =============================================
 
     /**
      * 높은 평점을 받은 전통주들 조회 (추천용)
-     *
-     * @param minRatingCount 최소 평점 개수
-     * @param limit 조회할 개수
      */
     @Query("""
         SELECT l FROM Liquor l 
-        WHERE l._ratingCount >= :minRatingCount 
-        AND l._score IS NOT NULL
-        ORDER BY l._score DESC, l._ratingCount DESC
+        WHERE l.ratingCount >= :minRatingCount 
+        AND l.score IS NOT NULL
+        ORDER BY l.score DESC, l.ratingCount DESC
         LIMIT :limit
     """)
     fun findTopRatedLiquors(
@@ -117,8 +112,8 @@ interface LiquorRatingRepository : JpaRepository<LiquorRating, String> {
      */
     @Query("""
         SELECT r FROM LiquorRating r 
-        WHERE r._score >= :minScore
-        ORDER BY r._score DESC, r.createdAt DESC
+        WHERE r.score >= :minScore
+        ORDER BY r.score DESC, r.createdAt DESC
     """)
     fun findRatingsAboveScore(@Param("minScore") minScore: Double): List<LiquorRating>
 
@@ -138,8 +133,8 @@ interface LiquorRatingRepository : JpaRepository<LiquorRating, String> {
      */
     @Query("""
         SELECT r FROM LiquorRating r 
-        WHERE r._comment IS NOT NULL 
-        AND LENGTH(TRIM(r._comment)) > 0
+        WHERE r.comment IS NOT NULL 
+        AND LENGTH(TRIM(r.comment)) > 0
         ORDER BY r.createdAt DESC
     """)
     fun findRatingsWithComments(): List<LiquorRating>

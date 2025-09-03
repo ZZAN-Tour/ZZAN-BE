@@ -15,7 +15,7 @@ import mu.KLogging
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
-
+import java.time.temporal.ChronoUnit
 
 @Service
 @Transactional
@@ -30,17 +30,20 @@ class LiquorRatingCommandServiceImpl(
     companion object : KLogging()
 
     override fun createRating(userId: String, request: CreateLiquorRatingRequest): String {
-        // 검증 로직은 동일
+        // 검증 로직
         val feed = validateRatingEligibility(userId, request.liquorId, request.sourceFeedId)
 
-        // ✅ 생성자를 통한 객체 생성 (변경 없음)
+        // 평점 점수 검증
+        validateScore(request.score)
+
+        // 엔티티 생성
         val rating = LiquorRating(
             userId = userId,
             liquorId = request.liquorId,
             sourceFeedId = request.sourceFeedId,
             placeId = feed.placeId,
-            _score = request.score, // private 필드에 직접 할당
-            _comment = request.comment
+            score = request.score,
+            comment = request.comment
         )
 
         val savedRating = liquorRatingRepository.save(rating)
@@ -55,20 +58,14 @@ class LiquorRatingCommandServiceImpl(
             CustomException(HttpStatus.NOT_FOUND, "평점을 찾을 수 없습니다.")
         }
 
-        // ✅ 도메인 객체의 비즈니스 로직 활용
-        if (!rating.canBeUpdatedBy(userId)) {
-            throw CustomException(HttpStatus.FORBIDDEN, "본인이 작성한 평점만 수정할 수 있습니다.")
-        }
+        // 권한 및 기간 검증
+        validateRatingUpdate(rating, userId)
+        validateScore(request.score)
 
-        // ✅ 추가 비즈니스 규칙 검증
-        if (!rating.isWithinEditablePeriod()) {
-            throw CustomException(HttpStatus.BAD_REQUEST, "평점은 작성 후 7일 이내에만 수정할 수 있습니다.")
-        }
-
-        // ✅ 도메인 메서드를 통한 안전한 업데이트
-        rating.updateRating(request.score, request.comment)
-
-        // ✅ save() 호출 불필요! JPA Dirty Checking이 자동 처리
+        // 직접 필드 업데이트
+        rating.score = request.score
+        rating.comment = request.comment
+        rating.updatedAt = LocalDateTime.now()
 
         eventPublisher.markLiquorForUpdate(rating.liquorId)
         logger.info("Updated liquor rating: $ratingId")
@@ -79,8 +76,8 @@ class LiquorRatingCommandServiceImpl(
             CustomException(HttpStatus.NOT_FOUND, "평점을 찾을 수 없습니다.")
         }
 
-        // ✅ 도메인 로직 활용
-        if (!rating.canBeUpdatedBy(userId)) {
+        // 권한 검증
+        if (rating.userId != userId) {
             throw CustomException(HttpStatus.FORBIDDEN, "본인이 작성한 평점만 삭제할 수 있습니다.")
         }
 
@@ -90,10 +87,6 @@ class LiquorRatingCommandServiceImpl(
         logger.info("Deleted liquor rating: $ratingId")
     }
 
-
-    /**
-     * 점수만 빠르게 업데이트
-     */
     override fun updateScoreOnly(userId: String, ratingId: String, newScore: Double) {
         logger.info("Updating rating score only - userId: $userId, ratingId: $ratingId, newScore: $newScore")
 
@@ -101,24 +94,17 @@ class LiquorRatingCommandServiceImpl(
             CustomException(HttpStatus.NOT_FOUND, "평점을 찾을 수 없습니다.")
         }
 
-        if (!rating.canBeUpdatedBy(userId)) {
-            throw CustomException(HttpStatus.FORBIDDEN, "권한이 없습니다.")
-        }
+        validateRatingUpdate(rating, userId)
+        validateScore(newScore)
 
-        if (!rating.isWithinEditablePeriod()) {
-            throw CustomException(HttpStatus.BAD_REQUEST, "평점은 작성 후 7일 이내에만 수정할 수 있습니다.")
-        }
-
-        // 도메인 메서드 사용 (점수 검증 포함)
-        rating.updateScore(newScore)
+        // 점수만 업데이트
+        rating.score = newScore
+        rating.updatedAt = LocalDateTime.now()
 
         eventPublisher.markLiquorForUpdate(rating.liquorId)
         logger.info("Updated rating score: $ratingId")
     }
 
-    /**
-     * 코멘트만 업데이트
-     */
     override fun updateCommentOnly(userId: String, ratingId: String, newComment: String?) {
         logger.info("Updating rating comment only - userId: $userId, ratingId: $ratingId")
 
@@ -126,34 +112,41 @@ class LiquorRatingCommandServiceImpl(
             CustomException(HttpStatus.NOT_FOUND, "평점을 찾을 수 없습니다.")
         }
 
-        if (!rating.canBeUpdatedBy(userId)) {
-            throw CustomException(HttpStatus.FORBIDDEN, "권한이 없습니다.")
-        }
+        validateRatingUpdate(rating, userId)
 
-        if (!rating.isWithinEditablePeriod()) {
-            throw CustomException(HttpStatus.BAD_REQUEST, "평점은 작성 후 7일 이내에만 수정할 수 있습니다.")
-        }
-
-        // 도메인 메서드 사용
-        rating.updateComment(newComment)
+        // 코멘트만 업데이트
+        rating.comment = newComment?.takeIf { it.isNotBlank() }
+        rating.updatedAt = LocalDateTime.now()
 
         eventPublisher.markLiquorForUpdate(rating.liquorId)
         logger.info("Updated rating comment: $ratingId")
     }
 
     /**
+     * 평점 수정 권한 및 기간 검증
+     */
+    private fun validateRatingUpdate(rating: LiquorRating, userId: String) {
+        if (rating.userId != userId) {
+            throw CustomException(HttpStatus.FORBIDDEN, "본인이 작성한 평점만 수정할 수 있습니다.")
+        }
+
+        val daysSinceCreated = ChronoUnit.DAYS.between(rating.createdAt, LocalDateTime.now())
+        if (daysSinceCreated > 7) {
+            throw CustomException(HttpStatus.BAD_REQUEST, "평점은 작성 후 7일 이내에만 수정할 수 있습니다.")
+        }
+    }
+
+    /**
+     * 평점 점수 검증
+     */
+    private fun validateScore(score: Double) {
+        if (score < 1.0 || score > 5.0) {
+            throw CustomException(HttpStatus.BAD_REQUEST, "평점은 1.0에서 5.0 사이여야 합니다: $score")
+        }
+    }
+
+    /**
      * 피드 기반 인증 검증
-     *
-     * 핵심 비즈니스 규칙:
-     * 1. 해당 사용자가 피드를 작성했는지 확인
-     * 2. 해당 피드에서 이 전통주를 태그했는지 확인
-     * 3. 전통주가 실제로 존재하는지 확인
-     *
-     * @param userId 사용자 ID
-     * @param liquorId 전통주 ID
-     * @param feedId 피드 ID
-     * @return 검증된 Feed 객체
-     * @throws CustomException 검증 실패 시
      */
     private fun validateRatingEligibility(userId: String, liquorId: String, feedId: String): Feed {
         logger.debug("Validating rating eligibility - userId: $userId, liquorId: $liquorId, feedId: $feedId")
