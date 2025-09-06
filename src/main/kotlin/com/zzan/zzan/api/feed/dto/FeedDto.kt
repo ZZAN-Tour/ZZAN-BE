@@ -77,7 +77,9 @@ data class TagInfo(
     val liquorType: String,
     val liquorBrewery: String?,
     val tagX: Double,
-    val tagY: Double
+    val tagY: Double,
+    val counts: FeedCountInfo
+
 )
 
 data class FeedSummaryResponse(
@@ -89,7 +91,15 @@ data class FeedSummaryResponse(
     val score: Double?,
     val text: String?,
     val placeName: String,
-    val createdAt: LocalDateTime
+    val createdAt: LocalDateTime,
+    val counts: FeedSummaryCountInfo
+
+)
+
+data class FeedSummaryCountInfo(
+    val likes: Long = 0,
+    val scraps: Long = 0,
+    val taggedLiquors: Int = 0
 )
 
 data class PlaceInfo(
