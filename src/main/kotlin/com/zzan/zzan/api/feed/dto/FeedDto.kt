@@ -65,7 +65,9 @@ data class FeedDetailResponse(
     val buyPlace: PlaceInfo?,
     val images: List<FeedImageInfo>,
     val tags: List<TagInfo>,
-    val createdAt: LocalDateTime
+    val createdAt: LocalDateTime,
+    val counts: FeedCountInfo
+
 )
 
 // 태그 정보 DTO
@@ -89,7 +91,15 @@ data class FeedSummaryResponse(
     val score: Double?,
     val text: String?,
     val placeName: String,
-    val createdAt: LocalDateTime
+    val createdAt: LocalDateTime,
+    val counts: FeedSummaryCountInfo
+)
+
+data class FeedSummaryCountInfo(
+    val likes: Long = 0,
+    val scraps: Long = 0,
+    val taggedLiquors: Int = 0
+    // ratings와 views는 목록에서는 제외 (성능 고려)
 )
 
 data class PlaceInfo(
