@@ -11,10 +11,19 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 class GlobalExceptionHandler : KLogging() {
     @ExceptionHandler(CustomException::class)
     fun handleCustomException(e: CustomException): ResponseEntity<ApiResponse<Nothing>> {
-        logger.error("Custom exception occurred: ${e.message} ", e)
+        logger.warn("Custom exception occurred: ${e.message} ", e)
 
         val errorResponse = ApiResponse.error<Nothing>(e.message ?: "오류가 발생했습니다");
         return ResponseEntity.status(e.status)
+            .body(errorResponse)
+    }
+
+    @ExceptionHandler(IllegalArgumentException::class)
+    fun handleIllegalArgumentException(e: IllegalArgumentException): ResponseEntity<ApiResponse<Nothing>> {
+        logger.warn("Invalid argument: ${e.message}")
+
+        val errorResponse = ApiResponse.error<Nothing>(e.message ?: "잘못된 요청입니다")
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
             .body(errorResponse)
     }
 

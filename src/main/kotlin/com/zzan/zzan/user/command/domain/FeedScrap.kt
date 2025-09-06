@@ -18,4 +18,16 @@ class FeedScrap(
 
     @Column(name = "feed_id", length = 26)
     val feedId: String, // 스크랩한 피드 ID
-)
+) {
+    companion object {
+        fun of(userId: String, feedId: String): FeedScrap {
+            require(userId.isNotBlank()) { "사용자 ID는 필수입니다" }
+            require(feedId.isNotBlank()) { "피드 ID는 필수입니다" }
+
+            return FeedScrap(
+                userId = userId,
+                feedId = feedId
+            )
+        }
+    }
+}
