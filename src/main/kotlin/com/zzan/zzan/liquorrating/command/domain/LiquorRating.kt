@@ -51,4 +51,7 @@ class LiquorRating(
     init {
         require(score in 0.0..5.0) { "평점은 1.0에서 5.0 사이여야 합니다: $score" }
     }
+
+
+
 }

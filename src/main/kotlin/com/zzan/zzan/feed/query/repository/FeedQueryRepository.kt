@@ -62,6 +62,41 @@ interface FeedQueryRepository : JpaRepository<Feed, String> {
     fun countByPlaceIdAndDeletedAtIsNull(placeId: String): Long
 
     /**
+     * 특정 피드 ID 목록으로 피드들 조회 - 최신순 (커서 기반)
+     */
+    @Query("""
+        SELECT f FROM Feed f 
+        WHERE f.id IN :feedIds 
+        AND f.deletedAt IS NULL
+        AND (:cursor IS NULL OR f.createdAt < :cursorDate OR (f.createdAt = :cursorDate AND f.id < :cursor))
+        ORDER BY f.createdAt DESC, f.id DESC
+    """)
+    fun findByIdInWithCursorRecent(
+        @Param("feedIds") feedIds: List<String>,
+        @Param("cursor") cursor: String?,
+        @Param("cursorDate") cursorDate: java.time.LocalDateTime?,
+        pageable: org.springframework.data.domain.Pageable
+    ): List<Feed>
+
+    /**
+     * 특정 피드 ID 목록으로 피드들 조회 - 평점순 (커서 기반)
+     */
+    @Query("""
+        SELECT f FROM Feed f 
+        WHERE f.id IN :feedIds 
+        AND f.deletedAt IS NULL
+        AND f.score IS NOT NULL
+        AND (:cursorScore IS NULL OR f.score < :cursorScore OR (f.score = :cursorScore AND f.id < :cursor))
+        ORDER BY f.score DESC, f.id DESC
+    """)
+    fun findByIdInWithCursorScore(
+        @Param("feedIds") feedIds: List<String>,
+        @Param("cursor") cursor: String?,
+        @Param("cursorScore") cursorScore: Double?,
+        pageable: org.springframework.data.domain.Pageable
+    ): List<Feed>
+
+    /**
      * 텍스트 검색 - 피드 내용에서 검색
      */
     @Query("""
@@ -103,4 +138,7 @@ interface FeedQueryRepository : JpaRepository<Feed, String> {
         @Param("maxScore") maxScore: Double?,
         pageable: Pageable
     ): Page<Feed>
+
+    fun findByIdInAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(feedIds: List<String>): List<Feed>
+    fun findByIdInAndDeletedAtIsNullAndScoreIsNotNullOrderByScoreDescIdDesc(feedIds: List<String>): List<Feed>
 }
