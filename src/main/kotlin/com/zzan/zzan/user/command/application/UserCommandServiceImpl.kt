@@ -5,9 +5,10 @@ import com.zzan.zzan.common.exception.CustomException
 import com.zzan.zzan.user.command.domain.FeedScrap
 import com.zzan.zzan.user.command.domain.LiquorScrap
 import com.zzan.zzan.user.command.domain.User
-import com.zzan.zzan.user.command.infrastructure.FeedScrapCommandRepository
-import com.zzan.zzan.user.command.infrastructure.LiquorScrapCommandRepository
-import com.zzan.zzan.user.command.infrastructure.UserCommandRepository
+import com.zzan.zzan.user.command.infrastructure.FeedScrapRepository
+import com.zzan.zzan.user.command.infrastructure.LiquorScrapRepository
+import com.zzan.zzan.user.command.infrastructure.UserRepository
+import org.springframework.cache.annotation.CacheEvict
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -15,11 +16,12 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 @Transactional
 class UserCommandServiceImpl(
-    private val userRepository: UserCommandRepository,
-    private val feedScrapRepository: FeedScrapCommandRepository,
-    private val liquorScrapRepository: LiquorScrapCommandRepository
+    private val userRepository: UserRepository,
+    private val feedScrapRepository: FeedScrapRepository,
+    private val liquorScrapRepository: LiquorScrapRepository
 ) : UserCommandService {
 
+    @CacheEvict(cacheNames = ["userByKakaoId"], key = "#user.kakaoId")
     override fun createUser(user: User): User {
         return userRepository.save(user)
     }

@@ -2,6 +2,7 @@ package com.zzan.zzan.user.query.repository
 
 import com.zzan.zzan.api.user.dto.FeedScrapResponse
 import com.zzan.zzan.api.user.dto.LiquorScrapResponse
+import com.zzan.zzan.api.user.dto.UserFeedResponse
 import com.zzan.zzan.user.command.domain.User
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
@@ -12,6 +13,25 @@ interface UserQueryRepository : JpaRepository<User, String> {
 
     @Query("SELECT u FROM User u WHERE u.kakaoId = :kakaoId")
     fun findUserByKakaoId(kakaoId: String): User?
+
+    @Query(
+        """
+            SELECT new com.zzan.zzan.api.user.dto.UserFeedResponse(
+                fs.id, f.id, f.imageUrl, p.id, p.name, p.address
+            )
+            FROM FeedScrap fs 
+            JOIN Feed f ON fs.feedId = f.id
+            JOIN Place p ON f.placeId = p.id
+            WHERE fs.userId = :userId
+            AND (:cursor IS NULL OR fs.id <= :cursor)
+            ORDER BY fs.id DESC
+        """
+    )
+    fun findFeedByUserId(
+        @Param("userId") userId: String,
+        @Param("cursor") cursor: String?,
+        pageable: Pageable
+    ): List<UserFeedResponse>
 
     @Query(
         """
@@ -26,7 +46,7 @@ interface UserQueryRepository : JpaRepository<User, String> {
             ORDER BY fs.id DESC
         """
     )
-    fun findFeedScrapsByUserIdWithCursor(
+    fun findFeedScrapsByUserId(
         @Param("userId") userId: String,
         @Param("cursor") cursor: String?,
         pageable: Pageable
@@ -44,7 +64,7 @@ interface UserQueryRepository : JpaRepository<User, String> {
             ORDER BY ls.id DESC
         """
     )
-    fun findLiquorScrapsByUserIdWithCursor(
+    fun findLiquorScrapsByUserId(
         @Param("userId") userId: String,
         @Param("cursor") cursor: String?,
         pageable: Pageable

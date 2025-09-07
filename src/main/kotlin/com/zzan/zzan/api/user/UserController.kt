@@ -1,9 +1,11 @@
 package com.zzan.zzan.api.user
 
-import com.zzan.zzan.api.user.dto.FeedScrapPageResponse
-import com.zzan.zzan.api.user.dto.GetScrapsRequest
-import com.zzan.zzan.api.user.dto.LiquorScrapPageResponse
+import com.zzan.zzan.api.common.dto.CursorPageRequest
+import com.zzan.zzan.api.common.dto.CursorPageResponse
+import com.zzan.zzan.api.user.dto.FeedScrapResponse
+import com.zzan.zzan.api.user.dto.LiquorScrapResponse
 import com.zzan.zzan.api.user.dto.ScrapResponse
+import com.zzan.zzan.api.user.dto.UserFeedResponse
 import com.zzan.zzan.common.response.ApiResponse
 import com.zzan.zzan.user.command.application.UserCommandService
 import com.zzan.zzan.user.query.handler.UserQueryService
@@ -16,14 +18,20 @@ class UserController(
     private val userQueryService: UserQueryService,
     private val userCommandService: UserCommandService
 ) {
+    @GetMapping("/feed")
+    fun getMyFeed(request: CursorPageRequest): ApiResponse<CursorPageResponse<UserFeedResponse>> {
+        val userId = SecurityContextHolder.getContext().authentication.name
+        return ApiResponse.ok(userQueryService.getMyFeed(request, userId))
+    }
+
     @GetMapping("/scraps/feed")
-    fun getFeedScraps(request: GetScrapsRequest): ApiResponse<FeedScrapPageResponse> {
+    fun getFeedScraps(request: CursorPageRequest): ApiResponse<CursorPageResponse<FeedScrapResponse>> {
         val userId = SecurityContextHolder.getContext().authentication.name
         return ApiResponse.ok(userQueryService.getFeedScraps(request, userId))
     }
 
     @GetMapping("/scraps/liquor")
-    fun getLiquorScraps(request: GetScrapsRequest): ApiResponse<LiquorScrapPageResponse> {
+    fun getLiquorScraps(request: CursorPageRequest): ApiResponse<CursorPageResponse<LiquorScrapResponse>> {
         val userId = SecurityContextHolder.getContext().authentication.name
         return ApiResponse.ok(userQueryService.getLiquorScraps(request, userId))
     }
