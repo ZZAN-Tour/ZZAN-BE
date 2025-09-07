@@ -1,19 +1,19 @@
 // src/main/kotlin/com/zzan/zzan/feed/command/service/FeedCommandServiceImpl.kt (업데이트)
 package com.zzan.zzan.feed.command.service
 
-import com.zzan.zzan.api.feed.dto.*
-import com.zzan.zzan.api.liquortag.dto.TagInFeedRequest
+import com.zzan.zzan.api.feed.dto.CreateFeedRequest
+import com.zzan.zzan.api.feed.dto.UpdateFeedRequest
 import com.zzan.zzan.common.exception.CustomException
 import com.zzan.zzan.feed.command.domain.Feed
 import com.zzan.zzan.feed.command.domain.FeedImage
 import com.zzan.zzan.feed.command.event.FeedCreatedEvent
-import com.zzan.zzan.feed.command.event.FeedUpdatedEvent
 import com.zzan.zzan.feed.command.event.FeedDeletedEvent
+import com.zzan.zzan.feed.command.event.FeedUpdatedEvent
 import com.zzan.zzan.feed.command.repository.FeedImageRepository
 import com.zzan.zzan.feed.command.repository.FeedRepository
 import com.zzan.zzan.liquortag.command.service.LiquorTagCommandService
 import com.zzan.zzan.place.command.repository.PlaceRepository
-import com.zzan.zzan.user.command.repository.UserRepository
+import com.zzan.zzan.user.command.infrastructure.UserRepository
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service

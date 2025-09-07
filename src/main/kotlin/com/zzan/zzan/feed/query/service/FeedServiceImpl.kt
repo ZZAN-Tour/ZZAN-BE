@@ -8,7 +8,7 @@ import com.zzan.zzan.feed.query.repository.FeedQueryRepository
 import com.zzan.zzan.liquortag.command.repository.LiquorTagRepository
 import com.zzan.zzan.liquortag.query.service.LiquorTagQueryService
 import com.zzan.zzan.place.command.repository.PlaceRepository
-import com.zzan.zzan.user.command.repository.UserRepository
+import com.zzan.zzan.user.command.infrastructure.UserRepository
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
@@ -24,8 +24,8 @@ class FeedQueryServiceImpl(
     private val feedQueryRepository: FeedQueryRepository,
     private val userRepository: UserRepository,
     private val placeRepository: PlaceRepository,
-    private val liquorTagRepository: LiquorTagRepository,
-    private val liquorTagQueryService: LiquorTagQueryService, // 🆕 추가
+    private val feedImageRepository: FeedImageRepository,
+    private val liquorTagQueryService: LiquorTagQueryService // 🆕 추가
 ) : FeedQueryService {
 
     @Cacheable("feed", key = "#feedId")
