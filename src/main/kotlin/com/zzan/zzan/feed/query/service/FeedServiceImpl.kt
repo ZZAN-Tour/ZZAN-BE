@@ -5,6 +5,7 @@ import com.zzan.zzan.common.exception.CustomException
 import com.zzan.zzan.feed.command.repository.FeedImageRepository
 import com.zzan.zzan.feed.query.FeedQueryService
 import com.zzan.zzan.feed.query.repository.FeedQueryRepository
+import com.zzan.zzan.liquortag.command.repository.LiquorTagRepository
 import com.zzan.zzan.liquortag.query.service.LiquorTagQueryService
 import com.zzan.zzan.place.command.repository.PlaceRepository
 import com.zzan.zzan.user.command.repository.UserRepository
@@ -23,8 +24,8 @@ class FeedQueryServiceImpl(
     private val feedQueryRepository: FeedQueryRepository,
     private val userRepository: UserRepository,
     private val placeRepository: PlaceRepository,
-    private val feedImageRepository: FeedImageRepository,
-    private val liquorTagQueryService: LiquorTagQueryService // 🆕 추가
+    private val liquorTagRepository: LiquorTagRepository,
+    private val liquorTagQueryService: LiquorTagQueryService, // 🆕 추가
 ) : FeedQueryService {
 
     @Cacheable("feed", key = "#feedId")
@@ -147,6 +148,7 @@ class FeedQueryServiceImpl(
         return feedQueryRepository.countByPlaceIdAndDeletedAtIsNull(placeId)
     }
 
+
     override fun searchFeeds(query: String, pageRequest: com.zzan.zzan.api.feed.dto.PageRequest): PageResponse<FeedSummaryResponse> {
         val sort = Sort.by(
             if (pageRequest.sortDirection.uppercase() == "DESC") Sort.Direction.DESC else Sort.Direction.ASC,
@@ -183,4 +185,89 @@ class FeedQueryServiceImpl(
             hasPrevious = feedPage.hasPrevious()
         )
     }
+
+    override fun getFeedsByLiquorTagWithCursor(
+        liquorId: String,
+        pageRequest: CursorPageRequest
+    ): CursorPageResponse<FeedSummaryResponse> {
+
+        // 1. 태그된 피드 ID 목록 조회 (커서 기반)
+        val limit = pageRequest.limit + 1 // hasNext 판단용 +1
+        val taggedFeedIds = liquorTagRepository.findDistinctFeedIdsByLiquorIdWithCursorRecent(
+            liquorId = liquorId,
+            cursor = pageRequest.cursor,
+            limit = limit
+        )
+
+        if (taggedFeedIds.isEmpty()) {
+            return CursorPageResponse(
+                content = emptyList(),
+                hasNext = false,
+                nextCursor = null,
+                totalCount = 0L
+            )
+        }
+
+        // 2. hasNext 판단 및 실제 데이터 추출
+        val hasNext = taggedFeedIds.size > pageRequest.limit
+        val actualFeedIds = if (hasNext) {
+            taggedFeedIds.dropLast(1)
+        } else {
+            taggedFeedIds
+        }
+
+        // 3. 피드 상세 정보 조회
+        val feeds = when (pageRequest.sortBy) {
+            "recent" -> {
+                feedQueryRepository.findByIdInAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(actualFeedIds)
+            }
+            "score" -> {
+                feedQueryRepository.findByIdInAndDeletedAtIsNullAndScoreIsNotNullOrderByScoreDescIdDesc(actualFeedIds)
+            }
+            else -> {
+                feedQueryRepository.findByIdInAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(actualFeedIds)
+            }
+        }
+
+        // 4. FeedSummaryResponse로 변환
+        val feedSummaries = feeds.map { feed -> convertToFeedSummary(feed) }
+
+        // 5. 다음 커서 생성
+        val nextCursor = if (hasNext && feedSummaries.isNotEmpty()) {
+            when (pageRequest.sortBy) {
+                "recent" -> feedSummaries.last().createdAt.toString() + ":" + feedSummaries.last().id
+                "score" -> (feedSummaries.last().score ?: 0.0).toString() + ":" + feedSummaries.last().id
+                else -> feedSummaries.last().id
+            }
+        } else null
+
+
+        return CursorPageResponse(
+            content = feedSummaries,
+            hasNext = hasNext,
+            nextCursor = nextCursor,
+            totalCount = null // 성능을 위해 총 개수는 별도 API로 제공
+        )
+
+    }
+
+    private fun convertToFeedSummary(feed: com.zzan.zzan.feed.command.domain.Feed): FeedSummaryResponse {
+        val user = userRepository.findByIdAndDeletedAtIsNull(feed.userId)
+        val place = placeRepository.findById(feed.placeId).orElse(null)
+
+        return FeedSummaryResponse(
+            id = feed.id,
+            userId = feed.userId,
+            userNickname = user?.nickname ?: "Unknown",
+            userProfileImageUrl = user?.profileImageUrl,
+            imageUrl = feed.imageUrl,
+            score = feed.score,
+            text = feed.text,
+            placeName = place?.name ?: "Unknown Place",
+            createdAt = feed.createdAt ?: LocalDateTime.now()
+        )
+    }
+
 }
+
+

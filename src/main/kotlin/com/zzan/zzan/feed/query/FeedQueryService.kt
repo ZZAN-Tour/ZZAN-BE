@@ -52,4 +52,19 @@ interface FeedQueryService {
      * @return PageResponse<FeedSummaryResponse> 검색된 피드 목록
      */
     fun searchFeeds(query: String, pageRequest: PageRequest): PageResponse<FeedSummaryResponse>
+
+
+    /**
+     * 특정 전통주가 태그된 피드 목록 조회 (커서 기반)
+     *
+     * @param liquorId 전통주 ID
+     * @param pageRequest 커서 페이징 정보
+     * @return 커서 페이징된 피드 목록
+     */
+    fun getFeedsByLiquorTagWithCursor(
+        liquorId: String,
+        pageRequest: CursorPageRequest
+    ): CursorPageResponse<FeedSummaryResponse>
+
+
 }
