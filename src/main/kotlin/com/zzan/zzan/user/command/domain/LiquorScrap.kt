@@ -18,4 +18,16 @@ class LiquorScrap(
 
     @Column(name = "liquor_id", length = 26)
     val liquorId: String, // 스크랩한 전통주 ID
-)
+) {
+    companion object {
+        fun of(userId: String, liquorId: String): LiquorScrap {
+            require(userId.isNotBlank()) { "사용자 ID는 필수입니다" }
+            require(liquorId.isNotBlank()) { "전통주 ID는 필수입니다" }
+            
+            return LiquorScrap(
+                userId = userId,
+                liquorId = liquorId,
+            )
+        }
+    }
+}

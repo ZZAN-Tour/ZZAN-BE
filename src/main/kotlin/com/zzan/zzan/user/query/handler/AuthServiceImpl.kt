@@ -27,12 +27,12 @@ class AuthServiceImpl(
         val kakaoUser = kakaoApiClient.getUserInfo(kakaoAccessToken)
 
         // 3. 사용자 저장/조회
-        val userId = userQueryService.findUserIdByKakaoId(kakaoUser.id.toString())
+        val user = userQueryService.findUserByKakaoId(kakaoUser.id.toString())
             ?: userCommandService.createUser(User.of(kakaoUser))
 
         // 4. JWT 토큰 생성 (액세스 토큰, 리프레시 토큰)
-        val accessToken = jwtUtil.createAccessToken(userId)
-        val refreshToken = jwtUtil.createRefreshToken(userId)
+        val accessToken = jwtUtil.createAccessToken(user)
+        val refreshToken = jwtUtil.createRefreshToken(user.id);
 
         return LoginResponse(
             accessToken = accessToken,
