@@ -78,7 +78,6 @@ data class TagInfo(
     val liquorBrewery: String?,
     val tagX: Double,
     val tagY: Double,
-    val counts: FeedCountInfo
 
 )
 
@@ -92,7 +91,6 @@ data class FeedSummaryResponse(
     val text: String?,
     val placeName: String,
     val createdAt: LocalDateTime,
-    val counts: FeedSummaryCountInfo
 
 )
 
