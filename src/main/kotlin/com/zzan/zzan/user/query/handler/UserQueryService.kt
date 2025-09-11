@@ -1,14 +1,18 @@
 package com.zzan.zzan.user.query.handler
 
-import com.zzan.zzan.api.user.dto.FeedScrapPageResponse
-import com.zzan.zzan.api.user.dto.GetScrapsRequest
-import com.zzan.zzan.api.user.dto.LiquorScrapPageResponse
+import com.zzan.zzan.api.common.dto.CursorPageRequest
+import com.zzan.zzan.api.common.dto.CursorPageResponse
+import com.zzan.zzan.api.user.dto.FeedScrapResponse
+import com.zzan.zzan.api.user.dto.LiquorScrapResponse
+import com.zzan.zzan.api.user.dto.UserFeedResponse
 import com.zzan.zzan.user.command.domain.User
 
 interface UserQueryService {
     fun findUserByKakaoId(kakaoId: String): User?
 
-    fun getFeedScraps(request: GetScrapsRequest, userId: String): FeedScrapPageResponse
+    fun getMyFeed(request: CursorPageRequest, userId: String): CursorPageResponse<UserFeedResponse>
 
-    fun getLiquorScraps(request: GetScrapsRequest, userId: String): LiquorScrapPageResponse
+    fun getFeedScraps(request: CursorPageRequest, userId: String): CursorPageResponse<FeedScrapResponse>
+
+    fun getLiquorScraps(request: CursorPageRequest, userId: String): CursorPageResponse<LiquorScrapResponse>
 }

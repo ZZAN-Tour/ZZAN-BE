@@ -1,6 +1,6 @@
-package com.zzan.zzan.api.security.config
+package com.zzan.zzan.common.security.config
 
-import com.zzan.zzan.api.security.filter.JwtAuthenticationFilter
+import com.zzan.zzan.common.security.filter.JwtAuthenticationFilter
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity

@@ -1,4 +1,4 @@
-package com.zzan.zzan.api.security.filter
+package com.zzan.zzan.common.security.filter
 
 import com.zzan.zzan.common.util.JwtUtil
 import jakarta.servlet.FilterChain
@@ -55,7 +55,7 @@ class JwtAuthenticationFilter(
 
         if (userId != null && role != null) {
             val authorities = listOf(SimpleGrantedAuthority("ROLE_$role"))
-            
+
             val authentication = UsernamePasswordAuthenticationToken(
                 userId, // name
                 null,
