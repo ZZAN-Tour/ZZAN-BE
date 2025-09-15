@@ -33,11 +33,8 @@ data class Feed(
 
     @CreatedDate
     @Column(name = "created_at")
-    val createdAt: LocalDateTime? = null,
+    var createdAt: LocalDateTime? = null,
 
     @Column(name = "deleted_at")
     val deletedAt: LocalDateTime? = null
-) {
-    // JPA 요구사항을 위한 기본 생성자
-    protected constructor() : this("", "", "", null, null, "", null, null, null)
-}
+)

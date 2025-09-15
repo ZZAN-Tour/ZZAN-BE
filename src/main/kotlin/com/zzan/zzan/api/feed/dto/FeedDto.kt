@@ -18,11 +18,11 @@ data class CreateFeedRequest(
 
     @field:Size(max = 2000, message = "피드 내용은 2000자 이하여야 합니다.")
     val text: String?,
+    val buyPlaceInfo: PlaceRequest?,
 
-    @field:NotBlank(message = "장소 ID는 필수입니다.")
-    val placeId: String,
-
-    val buyPlaceId: String?,
+    @field:Valid
+    @NotNull
+    val placeInfo: PlaceRequest,
 
     @field:Valid
     @field:NotEmpty(message = "최소 1개의 이미지가 필요합니다.")
@@ -30,9 +30,16 @@ data class CreateFeedRequest(
 
     @field:Valid
     val tags: List<TagInFeedRequest> = emptyList() // 태그 추가
-)
-
-
+) {
+    data class PlaceRequest(
+        val kakaoPlaceId: String,
+        val name: String, // 장소 이름
+        val address: String, // 장소 주소
+        val phone: String?, // 장소 전화번호
+        val latitude: Double, // 위도
+        val longitude: Double // 경도
+    )
+}
 
 data class FeedImageRequest(
     @field:NotBlank(message = "이미지 URL은 필수입니다.")
@@ -79,7 +86,7 @@ data class TagInfo(
     val tagX: Double,
     val tagY: Double,
 
-)
+    )
 
 data class FeedSummaryResponse(
     val id: String,
@@ -92,7 +99,7 @@ data class FeedSummaryResponse(
     val placeName: String,
     val createdAt: LocalDateTime,
 
-)
+    )
 
 data class FeedSummaryCountInfo(
     val likes: Long = 0,
