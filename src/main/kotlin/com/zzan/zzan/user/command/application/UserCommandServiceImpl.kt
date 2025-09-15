@@ -36,6 +36,7 @@ class UserCommandServiceImpl(
         )
     }
 
+    @CacheEvict(value = ["liquor"], key = "#liquorId")
     override fun createLiquorScrap(userId: String, liquorId: String): ScrapResponse {
         if (liquorScrapRepository.existsByUserIdAndLiquorId(userId, liquorId)) {
             throw CustomException(HttpStatus.CONFLICT, "이미 스크랩된 전통주입니다.")
@@ -54,6 +55,7 @@ class UserCommandServiceImpl(
         return ScrapResponse(feedScrap.id)
     }
 
+    @CacheEvict(value = ["liquor"], key = "#liquorId")
     override fun deleteLiquorScrap(userId: String, liquorId: String): ScrapResponse {
         val liquorScrap = liquorScrapRepository.findByUserIdAndLiquorId(userId, liquorId)
             ?: throw CustomException(HttpStatus.NOT_FOUND, "스크랩이 존재하지 않습니다.")
@@ -61,5 +63,4 @@ class UserCommandServiceImpl(
         liquorScrapRepository.delete(liquorScrap)
         return ScrapResponse(liquorScrap.id)
     }
-
 }
