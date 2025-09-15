@@ -10,5 +10,5 @@ interface LiquorQueryService {
      * @param id 조회할 술의 ID
      * @return LiquorDetailResponse 술 상세 정보 응답 객체
      */
-    fun getLiquorById(id: String): LiquorDetailResponse
+    fun getLiquorById(id: String, userId: String): LiquorDetailResponse
 }
