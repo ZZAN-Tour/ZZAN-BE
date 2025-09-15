@@ -2,13 +2,12 @@ package com.zzan.zzan.feed.query.service
 
 import com.zzan.zzan.api.feed.dto.*
 import com.zzan.zzan.common.exception.CustomException
-import com.zzan.zzan.feed.command.repository.FeedImageRepository
 import com.zzan.zzan.feed.query.FeedQueryService
 import com.zzan.zzan.feed.query.repository.FeedQueryRepository
 import com.zzan.zzan.liquortag.command.repository.LiquorTagRepository
 import com.zzan.zzan.liquortag.query.service.LiquorTagQueryService
 import com.zzan.zzan.place.command.repository.PlaceRepository
-import com.zzan.zzan.user.command.repository.UserRepository
+import com.zzan.zzan.user.command.infrastructure.UserRepository
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
@@ -24,8 +23,8 @@ class FeedQueryServiceImpl(
     private val feedQueryRepository: FeedQueryRepository,
     private val userRepository: UserRepository,
     private val placeRepository: PlaceRepository,
-    private val liquorTagRepository: LiquorTagRepository,
     private val liquorTagQueryService: LiquorTagQueryService, // 🆕 추가
+    private val liquorTagRepository: LiquorTagRepository
 ) : FeedQueryService {
 
     @Cacheable("feed", key = "#feedId")
@@ -99,7 +98,10 @@ class FeedQueryServiceImpl(
         )
     }
 
-    override fun getFeeds(criteria: FeedSearchCriteria, pageRequest: com.zzan.zzan.api.feed.dto.PageRequest): PageResponse<FeedSummaryResponse> {
+    override fun getFeeds(
+        criteria: FeedSearchCriteria,
+        pageRequest: com.zzan.zzan.api.feed.dto.PageRequest
+    ): PageResponse<FeedSummaryResponse> {
         val sort = Sort.by(
             if (pageRequest.sortDirection.uppercase() == "DESC") Sort.Direction.DESC else Sort.Direction.ASC,
             pageRequest.sortBy
@@ -149,7 +151,10 @@ class FeedQueryServiceImpl(
     }
 
 
-    override fun searchFeeds(query: String, pageRequest: com.zzan.zzan.api.feed.dto.PageRequest): PageResponse<FeedSummaryResponse> {
+    override fun searchFeeds(
+        query: String,
+        pageRequest: com.zzan.zzan.api.feed.dto.PageRequest
+    ): PageResponse<FeedSummaryResponse> {
         val sort = Sort.by(
             if (pageRequest.sortDirection.uppercase() == "DESC") Sort.Direction.DESC else Sort.Direction.ASC,
             pageRequest.sortBy
@@ -221,9 +226,11 @@ class FeedQueryServiceImpl(
             "recent" -> {
                 feedQueryRepository.findByIdInAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(actualFeedIds)
             }
+
             "score" -> {
                 feedQueryRepository.findByIdInAndDeletedAtIsNullAndScoreIsNotNullOrderByScoreDescIdDesc(actualFeedIds)
             }
+
             else -> {
                 feedQueryRepository.findByIdInAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(actualFeedIds)
             }

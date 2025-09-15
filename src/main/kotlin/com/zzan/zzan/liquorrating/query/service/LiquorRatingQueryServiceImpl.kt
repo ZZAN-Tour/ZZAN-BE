@@ -8,7 +8,7 @@ import com.zzan.zzan.liquor.command.repository.LiquorRepository
 import com.zzan.zzan.liquorrating.command.domain.LiquorRating
 import com.zzan.zzan.liquorrating.command.repository.LiquorRatingRepository
 import com.zzan.zzan.place.command.repository.PlaceRepository
-import com.zzan.zzan.user.command.repository.UserRepository
+import com.zzan.zzan.user.command.infrastructure.UserRepository
 import mu.KLogging
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.http.HttpStatus
