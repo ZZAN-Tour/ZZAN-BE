@@ -1,6 +1,7 @@
 package com.zzan.zzan.common.config
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect
+import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.PropertyAccessor
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator
@@ -11,7 +12,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.data.redis.connection.RedisConnectionFactory
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.data.redis.core.StringRedisTemplate
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer
+import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer
 import org.springframework.data.redis.serializer.StringRedisSerializer
 
 @Configuration
@@ -25,7 +26,7 @@ class RedisConfig {
         template.connectionFactory = connectionFactory
 
         // JSON Serializer 설정
-        val jackson2JsonRedisSerializer = GenericJackson2JsonRedisSerializer(redisObjectMapper())
+        val jackson2JsonRedisSerializer = Jackson2JsonRedisSerializer(redisObjectMapper(), Any::class.java)
         template.keySerializer = StringRedisSerializer()
         template.hashKeySerializer = StringRedisSerializer()
         template.valueSerializer = jackson2JsonRedisSerializer
@@ -56,7 +57,8 @@ class RedisConfig {
             // 타입 정보 포함 (역직렬화 시 타입 안전성)
             activateDefaultTyping(
                 LaissezFaireSubTypeValidator.instance,
-                ObjectMapper.DefaultTyping.NON_FINAL
+                ObjectMapper.DefaultTyping.EVERYTHING,
+                JsonTypeInfo.As.PROPERTY
             )
         }
     }
