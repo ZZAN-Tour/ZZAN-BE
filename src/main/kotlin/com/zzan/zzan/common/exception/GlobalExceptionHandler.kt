@@ -1,14 +1,43 @@
 package com.zzan.zzan.common.exception
 
 import com.zzan.zzan.common.response.ApiResponse
+import jakarta.validation.ConstraintViolationException
 import mu.KLogging
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 
 @ControllerAdvice
 class GlobalExceptionHandler : KLogging() {
+
+    @ExceptionHandler(MethodArgumentNotValidException::class)
+    fun handleMethodArgumentNotValidException(e: MethodArgumentNotValidException): ResponseEntity<ApiResponse<Nothing>> {
+        val errorMessage = e.bindingResult.fieldErrors.joinToString(", ") {
+            it.defaultMessage ?: "잘못된 입력입니다"
+        }
+
+        logger.warn("Validation failed: $errorMessage")
+
+        val errorResponse = ApiResponse.error<Nothing>(errorMessage)
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(errorResponse)
+    }
+
+    @ExceptionHandler(ConstraintViolationException::class)
+    fun handleConstraintViolationException(e: ConstraintViolationException): ResponseEntity<ApiResponse<Nothing>> {
+        val errorMessage = e.constraintViolations.joinToString(", ") {
+            it.message
+        }
+
+        logger.warn("Constraint violation: $errorMessage")
+
+        val errorResponse = ApiResponse.error<Nothing>(errorMessage)
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(errorResponse)
+    }
+
     @ExceptionHandler(CustomException::class)
     fun handleCustomException(e: CustomException): ResponseEntity<ApiResponse<Nothing>> {
         logger.warn("Custom exception occurred: ${e.message} ", e)
