@@ -1,7 +1,7 @@
 package com.zzan.zzan.api.user
 
-import com.zzan.zzan.api.common.dto.CursorPageRequest
-import com.zzan.zzan.api.common.dto.CursorPageResponse
+import com.zzan.zzan.api.common.dto.CommonPageRequest
+import com.zzan.zzan.api.common.dto.CommonPageResponse
 import com.zzan.zzan.api.user.dto.FeedScrapResponse
 import com.zzan.zzan.api.user.dto.LiquorScrapResponse
 import com.zzan.zzan.api.user.dto.ScrapResponse
@@ -20,19 +20,19 @@ class UserController(
     private val userCommandService: UserCommandService
 ) {
     @GetMapping("/feed")
-    fun getMyFeed(@Valid request: CursorPageRequest): ApiResponse<CursorPageResponse<UserFeedResponse>> {
+    fun getMyFeed(@Valid request: CommonPageRequest): ApiResponse<CommonPageResponse<UserFeedResponse>> {
         val userId = SecurityContextHolder.getContext().authentication.name
         return ApiResponse.ok(userQueryService.getMyFeed(request, userId))
     }
 
     @GetMapping("/scraps/feed")
-    fun getFeedScraps(@Valid request: CursorPageRequest): ApiResponse<CursorPageResponse<FeedScrapResponse>> {
+    fun getFeedScraps(@Valid request: CommonPageRequest): ApiResponse<CommonPageResponse<FeedScrapResponse>> {
         val userId = SecurityContextHolder.getContext().authentication.name
         return ApiResponse.ok(userQueryService.getFeedScraps(request, userId))
     }
 
     @GetMapping("/scraps/liquor")
-    fun getLiquorScraps(@Valid request: CursorPageRequest): ApiResponse<CursorPageResponse<LiquorScrapResponse>> {
+    fun getLiquorScraps(@Valid request: CommonPageRequest): ApiResponse<CommonPageResponse<LiquorScrapResponse>> {
         val userId = SecurityContextHolder.getContext().authentication.name
         return ApiResponse.ok(userQueryService.getLiquorScraps(request, userId))
     }
@@ -60,5 +60,11 @@ class UserController(
     fun deleteLiquorScrap(@RequestParam liquorId: String): ApiResponse<ScrapResponse> {
         val userId = SecurityContextHolder.getContext().authentication.name
         return ApiResponse.ok(userCommandService.deleteLiquorScrap(userId, liquorId))
+    }
+
+    @GetMapping("/feed/isScrap")
+    fun isFeedScrap(@RequestParam feedId: String): ApiResponse<Boolean> {
+        val userId = SecurityContextHolder.getContext().authentication.name
+        return ApiResponse.ok(userQueryService.isFeedScrap(userId, feedId))
     }
 }
