@@ -1,63 +1,76 @@
 name: zzan
 
 services:
-  postgres:
-    image: 'postgres:latest'
-    environment:
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_USER=${POSTGRES_USER}
-    ports:
-      - '${POSTGRES_PORT:-5432}:5432'
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - app_network
-  redis:
-    image: 'redis:latest'
-    ports:
-      - '${REDIS_PORT:-6379}:6379'
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-    networks:
-      - app_network
+    postgres:
+        image: 'postgis/postgis:16-3.4'
+        environment:
+            - POSTGRES_DB=${POSTGRES_DB}
+            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+            - POSTGRES_USER=${POSTGRES_USER}
+        ports:
+            - '${POSTGRES_PORT:-5432}:5432'
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+        healthcheck:
+            test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        networks:
+            - app_network
 
-  web:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    environment:
-      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-default}
-      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-      - REDIS_URL=redis://redis:6379
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-    ports:
-      - '${WEB_PORT:-8000}:8000'
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - app_network
+    redis:
+        image: 'redis:latest'
+        ports:
+            - '${REDIS_PORT:-6379}:6379'
+        volumes:
+            - redis_data:/data
+        healthcheck:
+            test: [ "CMD", "redis-cli", "ping" ]
+            interval: 10s
+            timeout: 3s
+            retries: 5
+        networks:
+            - app_network
+
+    web:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        environment:
+            - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-default}
+            # Database configuration
+            - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+            - POSTGRES_USER=${POSTGRES_USER}
+            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+            - POSTGRES_DB=${POSTGRES_DB}
+            # Redis configuration
+            - REDIS_URL=redis://redis:6379
+            # JWT Secret Key
+            - JWT_SECRET_KEY=${JWT_SECRET}
+            # Kakao API Key
+            - KAKAO_CLIENT_ID=${KAKAO_CLIENT_ID}
+            - KAKAO_REDIRECT_URI=${KAKAO_REDIRECT_URI}
+            - SECURITY_ROLE=${SECURITY_ROLE:-USER}
+            - AWS_ACCESS_KEY=${AWS_ACCESS_KEY}
+            - AWS_SECRET_KEY=${AWS_SECRET_KEY}
+            - AWS_REGION=${AWS_REGION:-ap-northeast-2}
+            - AWS_S3_BUCKET=${AWS_S3_BUCKET:-zzan-images}
+        ports:
+            - '${WEB_PORT:-8000}:8080'
+        depends_on:
+            postgres:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+        networks:
+            - app_network
 
 
 networks:
-  app_network:
-    driver: bridge
+    app_network:
+        driver: bridge
 
 volumes:
-  postgres_data:
-  redis_data:
+    postgres_data:
+    redis_data:

@@ -1,4 +1,3 @@
-
 ``` mermaid
 ---
 config:
@@ -6,6 +5,7 @@ config:
   theme: redux
   look: neo
 ---
+
 flowchart TB
 subgraph Public_Subnet["Public Subnet (10.0.1.0/24)"]
 EC2Public["Public EC2<br>(t2.micro)<br><b>+ Nginx Reverse Proxy</b>"]
@@ -45,4 +45,5 @@ Dev["👩‍💻 React Native App"] --> EC2Public
 Monitoring["🛠️ Grafana + Prometheus + Loki"] --> EC2Public & Prometheus & Loki & Grafana
 Postgre --> PostgreSQL
 Redis --> RedisStack
+
 ```

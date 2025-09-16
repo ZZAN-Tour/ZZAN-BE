@@ -1,37 +1,39 @@
 package com.zzan.zzan.feed.command.domain
 
+import com.github.f4b6a3.ulid.UlidCreator
 import jakarta.persistence.*
 import org.springframework.data.annotation.CreatedDate
-import com.github.f4b6a3.ulid.UlidCreator
+import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import java.time.LocalDateTime
 
 @Entity
 @Table(name = "feeds")
-class Feed(
+@EntityListeners(AuditingEntityListener::class)
+data class Feed(
     @Id
     @Column(length = 26)
     val id: String = UlidCreator.getUlid().toString(),
 
     @Column(name = "user_id", length = 26)
-    val userId: String, // 작성자 ID
+    val userId: String,
 
     @Column(name = "image_url")
-    val imageUrl: String, // 피드 대표 이미지 URL
+    val imageUrl: String,
 
-    val star: Int = 0, // 피드 평점 (0~5)
+    val score: Double? = null,
 
     @Column(columnDefinition = "TEXT")
-    val text: String, // 피드 내용
+    val text: String? = null,
 
     @Column(name = "place_id", length = 26)
-    val placeId: String?, // 피드 장소 ID
+    val placeId: String,
 
     @Column(name = "buy_place_id", length = 26)
-    val buyPlaceId : String? = null, // 전통주 구매 장소 ID
+    val buyPlaceId: String? = null,
 
     @CreatedDate
     @Column(name = "created_at")
-    val createdAt: LocalDateTime = LocalDateTime.now(),
+    var createdAt: LocalDateTime? = null,
 
     @Column(name = "deleted_at")
     val deletedAt: LocalDateTime? = null
