@@ -139,7 +139,8 @@ class FeedCommandServiceImpl(
     }
 
     private fun validateFeedCreation(request: CreateFeedRequest) {
-        if (!userRepository.existsByIdAndDeletedAtIsNull(request.userId)) {
+        if (!userRepository.
+            existsByIdAndDeletedAtIsNull(request.userId)) {
             throw CustomException(HttpStatus.BAD_REQUEST, "존재하지 않는 사용자입니다.")
         }
 

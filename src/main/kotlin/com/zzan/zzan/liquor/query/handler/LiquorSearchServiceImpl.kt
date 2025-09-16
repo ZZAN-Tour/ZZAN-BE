@@ -16,8 +16,10 @@ class LiquorSearchServiceImpl(
         if (keyword.isBlank()) return emptyList()
 
         val trimmedKeyword = keyword.trim()
-        return liquorSearchRepository.findLiquorsStartingWith(trimmedKeyword)
+        val results = liquorSearchRepository.findLiquorsStartingWith(trimmedKeyword)
             .take(limit)
+
+        return results
     }
 
     @Cacheable("liquorSearch", key = "#keyword")

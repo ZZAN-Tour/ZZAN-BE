@@ -1,4 +1,4 @@
-// src/main/kotlin/com/zzan/zzan/liquor/query/repository/LiquorSearchRepository.kt (수정)
+// src/main/kotlin/com/zzan/zzan/liquor/query/repository/LiquorSearchRepository.kt (전체 수정)
 package com.zzan.zzan.liquor.query.repository
 
 import com.zzan.zzan.api.liquor.dto.LiquorSearchResponse
@@ -12,33 +12,39 @@ import org.springframework.stereotype.Repository
 interface LiquorSearchRepository : JpaRepository<Liquor, String> {
 
     /**
-     * 자동완성용 전통주 검색
-     * 입력한 키워드로 시작하는 전통주들을 반환
+     * 자동완성용 전통주 검색 (평점 정보 포함)
      */
     @Query("""
         SELECT new com.zzan.zzan.api.liquor.dto.LiquorSearchResponse(
-            l.id, l.name, l.type, l.brewery, l.imageUrl
+            l.id, l.name, l.type, l.brewery, l.imageUrl, l.score, l.ratingCount
         )
         FROM Liquor l 
         WHERE LOWER(l.name) LIKE LOWER(CONCAT(:keyword, '%'))
-        ORDER BY l.name
+        ORDER BY 
+            CASE WHEN l.ratingCount >= 3 THEN 1 ELSE 2 END,  
+            l.score DESC NULLS LAST,                         
+            l.ratingCount DESC,                              
+            l.name                                           
     """)
     fun findLiquorsStartingWith(@Param("keyword") keyword: String): List<LiquorSearchResponse>
 
     /**
-     * 전체 텍스트 검색 (이름, 타입, 양조장명 포함)
+     * 전체 텍스트 검색 (평점 정보 포함)
      */
     @Query("""
         SELECT new com.zzan.zzan.api.liquor.dto.LiquorSearchResponse(
-            l.id, l.name, l.type, l.brewery, l.imageUrl
+            l.id, l.name, l.type, l.brewery, l.imageUrl, l.score, l.ratingCount
         )
         FROM Liquor l 
         WHERE LOWER(l.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
               LOWER(l.type) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
               LOWER(l.brewery) LIKE LOWER(CONCAT('%', :keyword, '%'))
         ORDER BY 
-            CASE WHEN LOWER(l.name) LIKE LOWER(CONCAT(:keyword, '%')) THEN 1 ELSE 2 END,
-            l.name
+            CASE WHEN LOWER(l.name) LIKE LOWER(CONCAT(:keyword, '%')) THEN 1 ELSE 2 END,  
+            CASE WHEN l.ratingCount >= 3 THEN 1 ELSE 2 END,                              
+            l.score DESC NULLS LAST,                                                     
+            l.ratingCount DESC,                                                          
+            l.name                                                                       
     """)
     fun searchLiquors(@Param("keyword") keyword: String): List<LiquorSearchResponse>
 }
