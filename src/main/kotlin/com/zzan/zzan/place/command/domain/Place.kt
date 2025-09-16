@@ -31,7 +31,28 @@ class Place(
     val latitude: Double, // 위도 (Y 좌표)
 
     @Column(
-        columnDefinition = "geometry(Point, 4326) GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)) STORED"
+        columnDefinition = "geometry(Point, 4326) GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)) STORED",
+        insertable = false,
+        updatable = false
     )
     val location: Point? = null, // 장소 위치 (경도, 위도)
-)
+) {
+    companion object {
+        fun of(
+            name: String, address: String,
+            phone: String? = null,
+            longitude: Double,
+            latitude: Double,
+            kakaoPlaceId: String
+        ): Place {
+            return Place(
+                kakaoPlaceId = kakaoPlaceId,
+                name = name,
+                address = address,
+                phone = phone,
+                longitude = longitude,
+                latitude = latitude
+            )
+        }
+    }
+}

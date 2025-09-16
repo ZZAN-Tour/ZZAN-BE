@@ -7,11 +7,8 @@ import com.zzan.zzan.api.liquor.dto.LiquorDetailResponse
 import com.zzan.zzan.common.response.ApiResponse
 import com.zzan.zzan.feed.query.FeedQueryService
 import com.zzan.zzan.liquor.query.handler.LiquorQueryService
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/liquors")
@@ -24,11 +21,10 @@ class LiquorController(
      * 기존 전통주 기본 정보 조회
      */
     @GetMapping("/{id}")
-    fun getLiquorById(@PathVariable id: String): ApiResponse<LiquorDetailResponse> {
-        return ApiResponse.ok(liquorQueryService.getLiquorById(id))
+    fun getLiquorDetailById(@PathVariable id: String): ApiResponse<LiquorDetailResponse> {
+        val userId = SecurityContextHolder.getContext().authentication.name
+        return ApiResponse.ok(liquorQueryService.getLiquorById(id, userId))
     }
-
-    // 🔄 커서 기반 태그된 피드 조회 API들
 
     /**
      * 특정 전통주가 태그된 피드 목록 조회 (커서 기반)

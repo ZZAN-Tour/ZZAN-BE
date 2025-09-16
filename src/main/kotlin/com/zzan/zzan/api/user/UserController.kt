@@ -9,6 +9,7 @@ import com.zzan.zzan.api.user.dto.UserFeedResponse
 import com.zzan.zzan.common.response.ApiResponse
 import com.zzan.zzan.user.command.application.UserCommandService
 import com.zzan.zzan.user.query.handler.UserQueryService
+import jakarta.validation.Valid
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 
@@ -19,19 +20,19 @@ class UserController(
     private val userCommandService: UserCommandService
 ) {
     @GetMapping("/feed")
-    fun getMyFeed(request: CursorPageRequest): ApiResponse<CursorPageResponse<UserFeedResponse>> {
+    fun getMyFeed(@Valid request: CursorPageRequest): ApiResponse<CursorPageResponse<UserFeedResponse>> {
         val userId = SecurityContextHolder.getContext().authentication.name
         return ApiResponse.ok(userQueryService.getMyFeed(request, userId))
     }
 
     @GetMapping("/scraps/feed")
-    fun getFeedScraps(request: CursorPageRequest): ApiResponse<CursorPageResponse<FeedScrapResponse>> {
+    fun getFeedScraps(@Valid request: CursorPageRequest): ApiResponse<CursorPageResponse<FeedScrapResponse>> {
         val userId = SecurityContextHolder.getContext().authentication.name
         return ApiResponse.ok(userQueryService.getFeedScraps(request, userId))
     }
 
     @GetMapping("/scraps/liquor")
-    fun getLiquorScraps(request: CursorPageRequest): ApiResponse<CursorPageResponse<LiquorScrapResponse>> {
+    fun getLiquorScraps(@Valid request: CursorPageRequest): ApiResponse<CursorPageResponse<LiquorScrapResponse>> {
         val userId = SecurityContextHolder.getContext().authentication.name
         return ApiResponse.ok(userQueryService.getLiquorScraps(request, userId))
     }

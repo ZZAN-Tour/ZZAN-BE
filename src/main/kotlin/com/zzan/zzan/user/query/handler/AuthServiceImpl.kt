@@ -20,23 +20,44 @@ class AuthServiceImpl(
     }
 
     override fun handleKakaoCallback(code: String): LoginResponse {
-        // 1. 카카오 토큰 받기
+        println("===== 카카오 콜백 시작 =====")
+
         val kakaoAccessToken = kakaoApiClient.getAccessToken(code)
+        println("카카오 액세스 토큰: $kakaoAccessToken")
 
-        // 2. 카카오 사용자 정보 받기
         val kakaoUser = kakaoApiClient.getUserInfo(kakaoAccessToken)
+        println("카카오 사용자 정보: ${kakaoUser.id}")
 
-        // 3. 사용자 저장/조회
-        val user = userQueryService.findUserByKakaoId(kakaoUser.id.toString())
-            ?: userCommandService.createUser(User.of(kakaoUser))
+        val existingUser = userQueryService.findUserByKakaoId(kakaoUser.id.toString())
+        println("기존 사용자 조회 결과: ${existingUser?.id}")
 
-        // 4. JWT 토큰 생성 (액세스 토큰, 리프레시 토큰)
+        val user = existingUser ?: run {
+            println("===== 새 사용자 생성 시작 =====")
+            try {
+                val userToCreate = User.of(kakaoUser)
+                println("생성할 User 객체: $userToCreate")
+
+                val savedUser = userCommandService.createUser(userToCreate)
+                println("저장된 사용자: ${savedUser.id}")
+
+                // 바로 조회해서 검증
+                val verification = userQueryService.findUserByKakaoId(kakaoUser.id.toString())
+                println("저장 후 검증 조회: ${verification?.id}")
+
+                savedUser
+            } catch (e: Exception) {
+                println("사용자 생성 실패: ${e.message}")
+                e.printStackTrace()
+                throw e
+            }
+        }
+
+        println("최종 사용자 ID: ${user.id}")
+
         val accessToken = jwtUtil.createAccessToken(user)
-        val refreshToken = jwtUtil.createRefreshToken(user.id);
+        val refreshToken = jwtUtil.createRefreshToken(user.id)
 
-        return LoginResponse(
-            accessToken = accessToken,
-            refreshToken = refreshToken,
-        )
+        println("===== 카카오 콜백 완료 =====")
+        return LoginResponse(accessToken = accessToken, refreshToken = refreshToken)
     }
 }

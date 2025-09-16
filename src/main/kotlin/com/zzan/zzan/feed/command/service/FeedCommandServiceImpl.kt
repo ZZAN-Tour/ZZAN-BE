@@ -6,12 +6,12 @@ import com.zzan.zzan.api.feed.dto.UpdateFeedRequest
 import com.zzan.zzan.common.exception.CustomException
 import com.zzan.zzan.feed.command.domain.Feed
 import com.zzan.zzan.feed.command.domain.FeedImage
-import com.zzan.zzan.feed.command.event.FeedCreatedEvent
 import com.zzan.zzan.feed.command.event.FeedDeletedEvent
 import com.zzan.zzan.feed.command.event.FeedUpdatedEvent
 import com.zzan.zzan.feed.command.repository.FeedImageRepository
 import com.zzan.zzan.feed.command.repository.FeedRepository
 import com.zzan.zzan.liquortag.command.service.LiquorTagCommandService
+import com.zzan.zzan.place.command.domain.Place
 import com.zzan.zzan.place.command.repository.PlaceRepository
 import com.zzan.zzan.user.command.infrastructure.UserRepository
 import org.springframework.context.ApplicationEventPublisher
@@ -34,6 +34,36 @@ class FeedCommandServiceImpl(
     override fun createFeed(request: CreateFeedRequest): String {
         // 1. 유효성 검사
         validateFeedCreation(request)
+        val placeRequest = request.placeInfo
+        val buyPlaceRequest = request.buyPlaceInfo
+
+        val place = placeRepository.findByKakaoPlaceId(placeRequest.kakaoPlaceId)
+            ?: (placeRepository.save(
+                Place.of(
+                    name = placeRequest.name,
+                    address = placeRequest.address,
+                    phone = placeRequest.phone,
+                    latitude = placeRequest.latitude,
+                    longitude = placeRequest.longitude,
+                    kakaoPlaceId = placeRequest.kakaoPlaceId
+                )
+            ))
+
+        // count 값 증가시키기
+        placeRepository.incrementFeedCountById(place.id)
+
+        val buyPlaceId = buyPlaceRequest?.let {
+            placeRepository.findByKakaoPlaceId(it.kakaoPlaceId) ?: (placeRepository.save(
+                Place.of(
+                    name = it.name,
+                    address = it.address,
+                    phone = it.phone,
+                    latitude = it.latitude,
+                    longitude = it.longitude,
+                    kakaoPlaceId = it.kakaoPlaceId
+                )
+            ))
+        }?.id
 
         // 2. Feed 엔티티 생성 및 저장
         val feed = Feed(
@@ -41,8 +71,8 @@ class FeedCommandServiceImpl(
             imageUrl = request.imageUrl,
             score = request.score,
             text = request.text,
-            placeId = request.placeId,
-            buyPlaceId = request.buyPlaceId
+            placeId = place.id,
+            buyPlaceId = buyPlaceId
         )
         val savedFeed = feedRepository.save(feed)
 
@@ -60,17 +90,6 @@ class FeedCommandServiceImpl(
         if (request.tags.isNotEmpty()) {
             liquorTagCommandService.createTagsForFeed(savedFeed.id, savedImages, request.tags)
         }
-
-        // 5. 이벤트 발행
-        eventPublisher.publishEvent(
-            FeedCreatedEvent(
-                feedId = savedFeed.id,
-                userId = savedFeed.userId,
-                placeId = savedFeed.placeId,
-                buyPlaceId = savedFeed.buyPlaceId,
-                imageIds = savedImages.map { it.id }
-            )
-        )
 
         return savedFeed.id
     }
@@ -122,16 +141,6 @@ class FeedCommandServiceImpl(
     private fun validateFeedCreation(request: CreateFeedRequest) {
         if (!userRepository.existsByIdAndDeletedAtIsNull(request.userId)) {
             throw CustomException(HttpStatus.BAD_REQUEST, "존재하지 않는 사용자입니다.")
-        }
-
-        if (!placeRepository.existsById(request.placeId)) {
-            throw CustomException(HttpStatus.BAD_REQUEST, "존재하지 않는 장소입니다.")
-        }
-
-        request.buyPlaceId?.let { buyPlaceId ->
-            if (!placeRepository.existsById(buyPlaceId)) {
-                throw CustomException(HttpStatus.BAD_REQUEST, "존재하지 않는 구매 장소입니다.")
-            }
         }
 
         val orderNums = request.images.map { it.orderNum }
