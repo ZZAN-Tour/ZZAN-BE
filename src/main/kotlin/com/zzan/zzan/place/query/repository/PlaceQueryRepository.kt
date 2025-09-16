@@ -1,5 +1,6 @@
 package com.zzan.zzan.place.query.repository
 
+import com.zzan.zzan.api.place.dto.PlaceDetail
 import com.zzan.zzan.api.place.dto.PlaceResponse
 import com.zzan.zzan.place.command.domain.Place
 import com.zzan.zzan.place.command.domain.vo.ViewBox
@@ -25,5 +26,17 @@ interface PlaceQueryRepository : JpaRepository<Place, Long> {
         """
     )
     fun findPlacesByViewBox(@Param("viewBox") viewBox: ViewBox): List<PlaceResponse>
+
+    @Query(
+        """
+            SELECT new com.zzan.zzan.api.place.dto.PlaceDetail(
+                p.id, p.name, p.address, p.phone, 
+                p.longitude, p.latitude, p.score, p.count
+            )
+            FROM Place p 
+            WHERE p.id = :id
+        """
+    )
+    fun getPlaceDetailsById(id: String): PlaceDetail
 }
 

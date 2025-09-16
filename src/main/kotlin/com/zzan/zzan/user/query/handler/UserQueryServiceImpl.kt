@@ -1,7 +1,7 @@
 package com.zzan.zzan.user.query.handler
 
-import com.zzan.zzan.api.common.dto.CursorPageRequest
-import com.zzan.zzan.api.common.dto.CursorPageResponse
+import com.zzan.zzan.api.common.dto.CommonPageRequest
+import com.zzan.zzan.api.common.dto.CommonPageResponse
 import com.zzan.zzan.api.user.dto.FeedScrapResponse
 import com.zzan.zzan.api.user.dto.LiquorScrapResponse
 import com.zzan.zzan.api.user.dto.UserFeedResponse
@@ -21,7 +21,7 @@ class UserQueryServiceImpl(
         return userRepository.findUserByKakaoId(kakaoId)
     }
 
-    override fun getMyFeed(request: CursorPageRequest, userId: String): CursorPageResponse<UserFeedResponse> {
+    override fun getMyFeed(request: CommonPageRequest, userId: String): CommonPageResponse<UserFeedResponse> {
         val pageable = PageRequest.of(0, request.size + 1)
         val items = userRepository.findFeedByUserId(
             userId = userId,
@@ -31,14 +31,14 @@ class UserQueryServiceImpl(
 
         val hasNext = items.size > request.size
 
-        return CursorPageResponse(
+        return CommonPageResponse(
             items = if (hasNext) items.take(request.size) else items,
-            nextCursor = if (hasNext) items.last().scrapId else null,
+            nextCursor = if (hasNext) items.last().feedId else null,
             hasNext = hasNext
         )
     }
 
-    override fun getFeedScraps(request: CursorPageRequest, userId: String): CursorPageResponse<FeedScrapResponse> {
+    override fun getFeedScraps(request: CommonPageRequest, userId: String): CommonPageResponse<FeedScrapResponse> {
         val pageable = PageRequest.of(0, request.size + 1)
         val items = userRepository.findFeedScrapsByUserId(
             userId = userId,
@@ -48,14 +48,14 @@ class UserQueryServiceImpl(
 
         val hasNext = items.size > request.size
 
-        return CursorPageResponse(
+        return CommonPageResponse(
             items = if (hasNext) items.take(request.size) else items,
             nextCursor = if (hasNext) items.last().scrapId else null,
             hasNext = hasNext
         )
     }
 
-    override fun getLiquorScraps(request: CursorPageRequest, userId: String): CursorPageResponse<LiquorScrapResponse> {
+    override fun getLiquorScraps(request: CommonPageRequest, userId: String): CommonPageResponse<LiquorScrapResponse> {
         val pageable = PageRequest.of(0, request.size + 1)
         val items = userRepository.findLiquorScrapsByUserId(
             userId = userId,
@@ -65,10 +65,14 @@ class UserQueryServiceImpl(
 
         val hasNext = items.size > request.size
 
-        return CursorPageResponse(
+        return CommonPageResponse(
             items = if (hasNext) items.take(request.size) else items,
             nextCursor = if (hasNext) items.last().scrapId else null,
             hasNext = hasNext
         )
+    }
+
+    override fun isFeedScrap(userId: String, feedId: String): Boolean {
+        return userRepository.existsFeedScrapByUserIdAndFeedId(userId, feedId)
     }
 }

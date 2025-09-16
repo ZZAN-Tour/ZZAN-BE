@@ -1,8 +1,10 @@
-package com.zzan.zzan.feed.query.service
+package com.zzan.zzan.feed.query.handler
 
+import com.zzan.zzan.api.common.dto.CommonPageRequest
+import com.zzan.zzan.api.common.dto.CommonPageResponse
 import com.zzan.zzan.api.feed.dto.*
 import com.zzan.zzan.common.exception.CustomException
-import com.zzan.zzan.feed.query.FeedQueryService
+import com.zzan.zzan.feed.command.domain.Feed
 import com.zzan.zzan.feed.query.repository.FeedQueryRepository
 import com.zzan.zzan.liquortag.command.repository.LiquorTagRepository
 import com.zzan.zzan.liquortag.query.service.LiquorTagQueryService
@@ -13,17 +15,15 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 
 
 @Service
-@Transactional(readOnly = true)
 class FeedQueryServiceImpl(
     private val feedQueryRepository: FeedQueryRepository,
     private val userRepository: UserRepository,
     private val placeRepository: PlaceRepository,
-    private val liquorTagQueryService: LiquorTagQueryService, // 🆕 추가
+    private val liquorTagQueryService: LiquorTagQueryService,
     private val liquorTagRepository: LiquorTagRepository
 ) : FeedQueryService {
 
@@ -97,6 +97,24 @@ class FeedQueryServiceImpl(
             createdAt = feed.createdAt ?: LocalDateTime.now()
         )
     }
+
+    override fun getPlaceFeeds(placeId: String, request: CommonPageRequest): CommonPageResponse<FeedSummaryResponse> {
+        val pageable = PageRequest.of(0, request.size + 1)
+        val items = feedQueryRepository.findFeedByPlaceId(
+            placeId = placeId,
+            cursor = request.cursor,
+            pageable = pageable
+        )
+
+        val hasNext = items.size > request.size
+
+        return CommonPageResponse(
+            items = if (hasNext) items.take(request.size) else items,
+            nextCursor = if (hasNext) items.last().id else null,
+            hasNext = hasNext
+        )
+    }
+
 
     override fun getFeeds(
         criteria: FeedSearchCriteria,
@@ -258,7 +276,7 @@ class FeedQueryServiceImpl(
 
     }
 
-    private fun convertToFeedSummary(feed: com.zzan.zzan.feed.command.domain.Feed): FeedSummaryResponse {
+    private fun convertToFeedSummary(feed: Feed): FeedSummaryResponse {
         val user = userRepository.findByIdAndDeletedAtIsNull(feed.userId)
         val place = placeRepository.findById(feed.placeId).orElse(null)
 

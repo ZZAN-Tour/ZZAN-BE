@@ -5,7 +5,7 @@ import com.zzan.zzan.api.feed.dto.CursorPageResponse
 import com.zzan.zzan.api.feed.dto.FeedSummaryResponse
 import com.zzan.zzan.api.liquor.dto.LiquorDetailResponse
 import com.zzan.zzan.common.response.ApiResponse
-import com.zzan.zzan.feed.query.FeedQueryService
+import com.zzan.zzan.feed.query.handler.FeedQueryService
 import com.zzan.zzan.liquor.query.handler.LiquorQueryService
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*

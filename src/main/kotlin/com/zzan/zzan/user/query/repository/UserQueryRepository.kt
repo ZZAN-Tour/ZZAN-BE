@@ -17,14 +17,13 @@ interface UserQueryRepository : JpaRepository<User, String> {
     @Query(
         """
             SELECT new com.zzan.zzan.api.user.dto.UserFeedResponse(
-                fs.id, f.id, f.imageUrl, p.id, p.name, p.address
+                f.id, f.imageUrl, p.id, p.name, p.address
             )
-            FROM FeedScrap fs 
-            JOIN Feed f ON fs.feedId = f.id
+            FROM Feed f
             JOIN Place p ON f.placeId = p.id
-            WHERE fs.userId = :userId
-            AND (:cursor IS NULL OR fs.id <= :cursor)
-            ORDER BY fs.id DESC
+            WHERE f.userId = :userId
+            AND (:cursor IS NULL OR f.id <= :cursor)
+            ORDER BY f.id DESC
         """
     )
     fun findFeedByUserId(
@@ -69,4 +68,16 @@ interface UserQueryRepository : JpaRepository<User, String> {
         @Param("cursor") cursor: String?,
         pageable: Pageable
     ): List<LiquorScrapResponse>
+
+    @Query(
+        """
+            SELECT CASE WHEN COUNT(fs) > 0 THEN true ELSE false END
+            FROM FeedScrap fs
+            WHERE fs.userId = :userId AND fs.feedId = :feedId
+        """
+    )
+    fun existsFeedScrapByUserIdAndFeedId(
+        @Param("userId") userId: String,
+        @Param("feedId") feedId: String
+    ): Boolean
 }

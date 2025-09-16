@@ -97,9 +97,8 @@ data class FeedSummaryResponse(
     val score: Double?,
     val text: String?,
     val placeName: String,
-    val createdAt: LocalDateTime,
-
-    )
+    val createdAt: LocalDateTime?,
+)
 
 data class FeedSummaryCountInfo(
     val likes: Long = 0,
