@@ -1,9 +1,11 @@
 package com.zzan.zzan.api.feed
 
+import com.zzan.zzan.api.common.dto.CommonPageRequest
+import com.zzan.zzan.api.common.dto.CommonPageResponse
 import com.zzan.zzan.api.feed.dto.*
 import com.zzan.zzan.common.response.ApiResponse
 import com.zzan.zzan.feed.command.service.FeedCommandService
-import com.zzan.zzan.feed.query.FeedQueryService
+import com.zzan.zzan.feed.query.handler.FeedQueryService
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
 import java.time.LocalDateTime
@@ -112,22 +114,9 @@ class FeedController(
     @GetMapping("/place/{placeId}")
     fun getFeedsByPlace(
         @PathVariable placeId: String,
-        @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "20") size: Int,
-        @RequestParam(defaultValue = "createdAt") sortBy: String,
-        @RequestParam(defaultValue = "DESC") sortDirection: String
-    ): ApiResponse<PageResponse<FeedSummaryResponse>> {
-
-        val criteria = FeedSearchCriteria(placeId = placeId)
-        val pageRequest = PageRequest(
-            page = page,
-            size = size,
-            sortBy = sortBy,
-            sortDirection = sortDirection
-        )
-
-        val feeds = feedQueryService.getFeeds(criteria, pageRequest)
-        return ApiResponse.ok(feeds)
+        @Valid commonPageRequest: CommonPageRequest,
+    ): ApiResponse<CommonPageResponse<FeedSummaryResponse>> {
+        return ApiResponse.ok(feedQueryService.getPlaceFeeds(placeId, commonPageRequest))
     }
 
     /**

@@ -1,5 +1,7 @@
-package com.zzan.zzan.feed.query
+package com.zzan.zzan.feed.query.handler
 
+import com.zzan.zzan.api.common.dto.CommonPageRequest
+import com.zzan.zzan.api.common.dto.CommonPageResponse
 import com.zzan.zzan.api.feed.dto.*
 
 interface FeedQueryService {
@@ -10,6 +12,17 @@ interface FeedQueryService {
      * @return FeedDetailResponse 피드 상세 정보 응답 객체
      */
     fun getFeedById(feedId: String): FeedDetailResponse
+
+
+    /**
+     * 특정 장소에 해당하는 피드 목록을 조회합니다.
+     *
+     * @param placeId 조회할 장소의 ID
+     * @param request 커서 페이징 정보
+     * @return CommonPageResponse<FeedSummaryResponse> 커서 페이징된 피드 목록
+     */
+    fun getPlaceFeeds(placeId: String, request: CommonPageRequest): CommonPageResponse<FeedSummaryResponse>
+
 
     /**
      * 검색 조건과 페이징 정보에 따라 피드 목록을 조회합니다.
@@ -65,6 +78,4 @@ interface FeedQueryService {
         liquorId: String,
         pageRequest: CursorPageRequest
     ): CursorPageResponse<FeedSummaryResponse>
-
-
 }
