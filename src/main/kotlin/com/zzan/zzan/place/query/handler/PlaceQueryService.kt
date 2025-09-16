@@ -1,5 +1,6 @@
 package com.zzan.zzan.place.query.handler
 
+import com.zzan.zzan.api.place.dto.PlaceDetail
 import com.zzan.zzan.api.place.dto.PlaceResponse
 import com.zzan.zzan.place.command.domain.vo.ViewBox
 
@@ -11,4 +12,6 @@ interface PlaceQueryService {
      * @return 해당 ViewBox 내의 장소 목록
      */
     fun getPlacesInViewBox(viewBox: ViewBox): List<PlaceResponse>
+
+    fun getPlaceDetailById(placeId: String): PlaceDetail
 }
